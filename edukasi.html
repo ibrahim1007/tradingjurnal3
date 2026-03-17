@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Edukasi - LEODRA</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Merriweather:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #334155; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 0; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .font-merriweather { font-family: 'Merriweather', serif; }
+
+        @media screen and (min-width: 1280px) { body { zoom: 0.8; } }
+        main { margin-top: 6rem !important; }
+        @media screen and (min-width: 768px) { main { margin-top: 7rem !important; } }
+        
+        #desktop-sidebar { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); overflow-x: hidden; white-space: nowrap; }
+        #desktop-sidebar.is-collapsed { width: 5.5rem; }
+        #desktop-sidebar.is-collapsed:hover { width: 16rem; box-shadow: 4px 0 24px rgba(0,0,0,0.08); }
+        #desktop-sidebar.is-collapsed:not(:hover) a.flex, #desktop-sidebar.is-collapsed:not(:hover) button.flex { padding-left: 0 !important; padding-right: 0 !important; justify-content: center !important; }
+        .sidebar-text { transition: opacity 0.2s, max-width 0.3s; max-width: 200px; overflow: hidden; display: inline-block; vertical-align: middle; }
+        #desktop-sidebar.is-collapsed:not(:hover) .sidebar-text { opacity: 0; max-width: 0; }
+        #desktop-sidebar.is-collapsed:not(:hover) .sidebar-icon-margin { margin-right: 0; }
+        .sidebar-icon-margin { transition: margin-right 0.3s; margin-right: 0.75rem; }
+        #toggle-sidebar-btn { transition: transform 0.3s; }
+        #desktop-sidebar.is-collapsed:not(:hover) #toggle-sidebar-btn { transform: rotate(180deg); }
+        #main-wrapper { transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        .video-card:hover .play-overlay { background-color: rgba(15, 23, 42, 0.4); backdrop-filter: blur(2px); }
+        .video-card:hover .play-icon { transform: scale(1.2); color: #10b981; }
+
+        /* Tambahan Animasi Kuis */
+        @keyframes fadeInQuiz { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+        .animate-fade-in-quiz { animation: fadeInQuiz 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- ▼▼▼ HEADER UTAMA LEODRA ▼▼▼ -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-gray-200 fixed top-0 w-full z-50 transition-all duration-300 h-20 md:h-24">
+        <div class="w-full h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
+            
+            <div class="flex items-center flex-shrink-0 cursor-pointer" onclick="window.location.href='index.html'">
+                <span class="font-light text-xl md:text-2xl tracking-widest text-black font-merriweather">LEODRA</span>
+            </div>
+
+            <div class="flex-1 flex flex-col justify-center items-center px-1 overflow-hidden">
+                <span id="headerRealTimeClock" class="text-red-600 font-medium text-[11px] sm:text-[12px] md:text-sm tracking-wide leading-none whitespace-nowrap mb-0.5" style="font-family: 'Inter', sans-serif;">
+                    --:--:--
+                </span>
+                <span id="headerRealTimeDate" class="text-black font-light text-[9px] sm:text-[10px] md:text-xs tracking-wide leading-none whitespace-nowrap truncate max-w-full" style="font-family: 'Inter', sans-serif;">
+                    -- -- ----
+                </span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 md:gap-4 flex-shrink-0 min-w-[60px]">
+                <div class="hidden md:flex items-center gap-4">
+                    <div class="text-right">
+                        <!-- Teks Nama Di Desktop (Font Merriweather Eksklusif) -->
+                        <p id="desktop-user-info" class="text-sm font-light tracking-wide text-gray-900 leading-tight font-merriweather">Loading...</p>
+                        <div class="flex items-center justify-end gap-1.5 mt-1">
+                            <div class="w-1.5 h-1.5 rounded-none bg-green-500 animate-pulse"></div>
+                            <span class="text-[10px] text-green-600 font-bold tracking-wider uppercase">Online</span>
+                        </div>
+                    </div>
+                    <!-- Foto Profil Desktop -->
+                    <img id="desktop-user-avatar" src="https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff" alt="Profil User" class="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm flex-shrink-0">
+                </div>
+                
+                <!-- TOMBOL HAMBURGER & CLOSE (DIJADIKAN SATU DENGAN ANIMASI) -->
+                <button onclick="toggleMenu()" id="mobile-menu-btn" class="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-none transition-colors relative w-10 h-10 flex items-center justify-center overflow-hidden" aria-label="Toggle Menu">
+                    <span id="icon-menu" class="absolute transition-all duration-300 transform scale-100 rotate-0 opacity-100 flex items-center justify-center w-full h-full">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </span>
+                    <span id="icon-close" class="absolute transition-all duration-300 transform scale-0 -rotate-90 opacity-0 flex items-center justify-center w-full h-full text-rose-600">
+                        <i data-lucide="x" class="w-7 h-7"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ▼▼▼ MENU MOBILE (OVERLAY) ▼▼▼ -->
+    <div id="mobile-menu" class="fixed inset-0 bg-white z-[40] transform translate-x-full transition-transform duration-300 md:hidden flex flex-col pt-20">
+        
+        <!-- Bagian Info Akun (Fixed di atas, Warna Hitam Khusus, Sudut Tajam) -->
+        <div class="flex-shrink-0 px-4 pt-4 pb-2 bg-white border-b border-gray-100 z-10 shadow-sm relative">
+            <div class="bg-[#0a0a0a] p-5 rounded-none border border-gray-800 shadow-xl">
+                <div class="flex items-center gap-4 mb-4">
+                    <!-- FOTO PROFIL (Lingkaran) -->
+                    <img id="mobile-user-avatar" src="https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff" alt="Profil User" class="w-12 h-12 rounded-full object-cover border-2 border-gray-600 shadow-md flex-shrink-0">
+                    
+                    <div class="overflow-hidden w-full">
+                        <p class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-1">Identitas Sesi</p>
+                        <!-- Teks Nama & Email Di HP (Font Merriweather Eksklusif) -->
+                        <p id="mobile-user-name" class="text-base font-light tracking-wide text-white truncate font-merriweather mb-0.5">Guest</p>
+                        <p id="mobile-user-email" class="text-xs font-light text-gray-400 truncate font-merriweather">Belum login</p>
+                    </div>
+                </div>
+                <div class="border-t border-gray-800 pt-3 flex justify-between items-center">
+                    <div>
+                        <p class="text-[9px] text-gray-500 font-bold mb-1 uppercase tracking-widest">Status</p>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span class="text-[10px] text-green-500 font-bold uppercase tracking-wider">Online</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[9px] text-gray-500 font-bold mb-1 uppercase tracking-widest">Sesi Aktif</p>
+                        <p id="mobile-user-time" class="text-[10px] sm:text-xs font-mono text-blue-400 font-medium">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bagian Navigasi (Bisa di-scroll vertikal) -->
+        <nav class="flex-1 overflow-y-auto px-4 py-4 pb-10 flex flex-col gap-2 text-sm bg-white">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Menu Utama</p>
+            <a href="index.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Home</span> <i data-lucide="calculator" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="login.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-medium transition-colors"><span>Login</span> <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="beranda.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Beranda Trader</span> <i data-lucide="layout-dashboard" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="berandaanalis.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Beranda Analis</span> <i data-lucide="activity" class="w-4 h-4 text-gray-400"></i></a>
+            
+            <!-- ACTIVE MENU: EDUKASI -->
+            <a href="edukasi.html" class="flex items-center justify-between p-3.5 rounded-none text-[#14213d] bg-[#14213d]/5 border border-[#14213d]/10 font-bold"><span>Education for Student</span> <i data-lucide="graduation-cap" class="w-4 h-4 text-[#14213d]"></i></a>
+            
+            <a href="topanalisdantrader.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Top Analis Dan Trader</span> <i data-lucide="award" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="investasi.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Investasi</span> <i data-lucide="trending-up" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="backtest.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Backtest</span> <i data-lucide="history" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="langganan.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Langganan</span> <i data-lucide="credit-card" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="pengaturan.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Pengaturan</span> <i data-lucide="settings" class="w-4 h-4 text-gray-400"></i></a>
+            
+            <div class="h-px bg-gray-100 my-4 flex-shrink-0"></div>
+            <button onclick="logout()" class="flex items-center justify-center w-full py-4 px-3 text-white bg-rose-600 font-bold hover:bg-rose-700 rounded-none transition-colors text-sm shadow-md mb-4 flex-shrink-0"><i data-lucide="log-out" class="w-4 h-4 mr-2"></i> Logout</button>
+        </nav>
+    </div>
+
+    <!-- ▼▼▼ SIDEBAR DESKTOP (KIRI) ▼▼▼ -->
+    <aside id="desktop-sidebar" class="fixed left-0 top-24 bottom-0 w-64 bg-white border-r border-slate-200 z-40 hidden md:flex flex-col py-6 group">
+        <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
+            <div class="flex items-center justify-between px-2 mb-4">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest sidebar-text">Menu Navigasi</p>
+                <button onclick="toggleSidebarCollapse()" id="toggle-sidebar-btn" class="p-1 rounded-none text-slate-400 hover:text-[#14213d] hover:bg-slate-100 transition-colors">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <a href="index.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="home" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Home</span>
+            </a>
+            <a href="login.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="log-in" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Login</span>
+            </a>
+            <a href="beranda.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Beranda Trader</span>
+            </a>
+            <a href="berandaanalis.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="activity" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Beranda Analis</span>
+            </a>
+            
+            <!-- ACTIVE MENU: EDUKASI -->
+            <a href="edukasi.html" class="flex items-center px-4 py-3 text-sm font-medium rounded-none bg-[#14213d] text-white shadow-md shadow-slate-200 transition-all duration-300">
+                <i data-lucide="graduation-cap" class="w-5 h-5 text-white flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Education for Student</span>
+            </a>
+            
+            <a href="topanalisdantrader.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="award" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Top Analis Dan Trader</span>
+            </a>
+            <a href="investasi.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="trending-up" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Investasi</span>
+            </a>
+            <a href="backtest.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="history" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Backtest</span>
+            </a>
+            <a href="langganan.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300 mt-2">
+                <i data-lucide="credit-card" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Langganan</span>
+            </a>
+            <a href="pengaturan.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="settings" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Pengaturan</span>
+            </a>
+        </nav>
+        
+        <div class="px-4 pb-4 mt-auto">
+            <div class="h-px bg-slate-100 w-full mb-4"></div>
+            <button onclick="logout()" class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-none text-rose-600 hover:bg-rose-50 transition-all duration-300 mb-4">
+                <i data-lucide="log-out" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Logout</span>
+            </button>
+            <p class="text-xs text-slate-400 font-medium text-center w-full sidebar-text">© 2026 LEODRA</p>
+        </div>
+    </aside>
+
+    <!-- WRAPPER UNTUK KONTEN UTAMA -->
+    <div id="main-wrapper" class="md:ml-64 w-full md:w-[calc(100%-16rem)] flex-grow flex flex-col transition-all duration-300 relative">
+        <main class="flex-grow max-w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 w-full mb-8">
+            
+            <!-- HEADER SECTION -->
+            <div class="text-center max-w-3xl mx-auto mb-6 px-2">
+                <h1 class="text-2xl md:text-3xl font-serif font-bold text-gray-900 mb-2">Akademi Trading LEODRA</h1>
+                <p class="text-xs md:text-sm text-gray-600">
+                    Kurikulum pembelajaran terstruktur dari fondasi teknikal hingga penguasaan psikologi tingkat tinggi. Tonton modul secara berurutan untuk hasil maksimal.
+                </p>
+            </div>
+
+            <!-- QUOTE GENIUS (CATATAN PSIKOLOGI) -->
+            <div class="max-w-3xl mx-auto mb-8 bg-slate-900 text-white p-4 md:p-6 relative overflow-hidden shadow-sm border-l-4 border-emerald-500">
+                <i data-lucide="quote" class="absolute -top-4 -right-4 w-24 h-24 text-white/5 transform rotate-12"></i>
+                <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-4">
+                    <div class="w-14 h-14 md:w-16 md:h-16 bg-slate-800 rounded-full flex-shrink-0 border-2 border-emerald-500 flex items-center justify-center overflow-hidden">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/39/GodfreyKneller-IsaacNewton-1689.jpg" alt="Isaac Newton" class="w-full h-full object-cover opacity-80 mix-blend-luminosity">
+                    </div>
+                    <div>
+                        <p class="text-sm md:text-base font-serif italic text-slate-200 mb-3 leading-relaxed">
+                            "Saya bisa menghitung dengan presisi pergerakan benda-benda angkasa, tetapi saya tidak akan pernah bisa mengukur tingkat kegilaan (emosi) manusia."
+                        </p>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-emerald-400 text-sm">Sir Isaac Newton</span>
+                            <span class="text-[9px] text-slate-400 uppercase tracking-widest bg-slate-800 px-1.5 py-0.5 rounded-sm">Genius Fisika & Matematika</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2 border-t border-slate-700 pt-2">
+                            *Newton mengatakan ini setelah ia kehilangan seluruh kekayaannya karena *FOMO* dan keserakahan di pasar saham. Menguasai teknikal tidak ada artinya tanpa menguasai emosi.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BAGIAN 1: ALUR BELAJAR (KONSISTENSI) -->
+            <div class="bg-white border border-gray-200 p-4 md:p-6 mb-8 relative shadow-sm">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-gray-100 pb-3">
+                    <div>
+                        <h2 class="text-lg md:text-xl font-bold text-[#14213d] flex items-center gap-2">
+                            <i data-lucide="milestone" class="w-5 h-5 text-emerald-600"></i> 1. Struktur Alur Belajar Konsisten
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-1 font-medium tracking-wide">Peta jalan (Roadmap) evolusi Anda dari pemula hingga trader profesional Leodra.</p>
+                    </div>
+                </div>
+
+                <!-- Grafik Chart.js -->
+                <div id="chart-container" class="w-full h-48 md:h-60 mb-8 relative">
+                    <canvas id="learningCurveChart"></canvas>
+                </div>
+
+                <!-- Detail Fase Pembelajaran -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 relative items-end">
+                    <!-- Fase 1 -->
+                    <div class="relative z-10 bg-white border border-gray-200 p-3 hover:border-emerald-500 transition-all flex flex-col h-full group lg:mt-16">
+                        <div class="flex items-center gap-2 mb-2 border-b border-gray-100 pb-1.5">
+                            <span class="w-5 h-5 bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-[10px] group-hover:bg-emerald-600 group-hover:text-white">1</span>
+                            <h3 class="font-bold text-gray-900 text-[10px] uppercase tracking-wider group-hover:text-emerald-700">Belajar</h3>
+                        </div>
+                        <ul class="space-y-1.5 text-[9px] text-gray-600 flex-1">
+                            <li>• Mindset & prinsip forex</li>
+                            <li>• Pembentukan habit baru</li>
+                            <li>• Pembelajaran metode</li>
+                        </ul>
+                    </div>
+                    <!-- Fase 2 -->
+                    <div class="relative z-10 bg-white border border-gray-200 p-3 hover:border-emerald-500 transition-all flex flex-col h-full group lg:mt-12">
+                        <div class="flex items-center gap-2 mb-2 border-b border-gray-100 pb-1.5">
+                            <span class="w-5 h-5 bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-[10px] group-hover:bg-emerald-600 group-hover:text-white">2</span>
+                            <h3 class="font-bold text-gray-900 text-[10px] uppercase tracking-wider group-hover:text-emerald-700">Analisa</h3>
+                        </div>
+                        <ul class="space-y-1.5 text-[9px] text-gray-600 flex-1">
+                            <li>• Membuat trading plan</li>
+                            <li>• Latihan mental trading</li>
+                            <li>• Latihan psikologi market</li>
+                        </ul>
+                    </div>
+                    <!-- Fase 3 -->
+                    <div class="relative z-10 bg-white border border-gray-200 p-3 hover:border-emerald-500 transition-all flex flex-col h-full group lg:mt-8">
+                        <div class="flex items-center gap-2 mb-2 border-b border-gray-100 pb-1.5">
+                            <span class="w-5 h-5 bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-[10px] group-hover:bg-emerald-600 group-hover:text-white">3</span>
+                            <h3 class="font-bold text-gray-900 text-[10px] uppercase tracking-wider group-hover:text-emerald-700">Konsep</h3>
+                        </div>
+                        <ul class="space-y-1.5 text-[9px] text-gray-600 flex-1">
+                            <li>• Mindset pebisnis</li>
+                            <li>• Peningkatan habit</li>
+                            <li>• Pembentukan karakter</li>
+                        </ul>
+                    </div>
+                    <!-- Fase 4 -->
+                    <div class="relative z-10 bg-white border border-gray-200 p-3 hover:border-emerald-500 transition-all flex flex-col h-full group lg:mt-4">
+                        <div class="flex items-center gap-2 mb-2 border-b border-gray-100 pb-1.5">
+                            <span class="w-5 h-5 bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-[10px] group-hover:bg-emerald-600 group-hover:text-white">4</span>
+                            <h3 class="font-bold text-gray-900 text-[10px] uppercase tracking-wider group-hover:text-emerald-700">Prop Firm</h3>
+                        </div>
+                        <ul class="space-y-1.5 text-[9px] text-gray-600 flex-1">
+                            <li>• Eksekusi market via web</li>
+                            <li>• Ujian mental prop firm</li>
+                            <li>• Evaluasi psikologi</li>
+                        </ul>
+                    </div>
+                    <!-- Fase 5 -->
+                    <div class="relative z-10 bg-[#14213d] border border-[#14213d] p-3 shadow-sm flex flex-col h-full group lg:mt-0 lg:-translate-y-1">
+                        <div class="flex items-center gap-2 mb-2 border-b border-white/20 pb-1.5">
+                            <span class="w-5 h-5 bg-emerald-500 text-white flex items-center justify-center font-bold text-[10px]"><i data-lucide="award" class="w-3 h-3"></i></span>
+                            <h3 class="font-bold text-white text-[10px] uppercase tracking-wider">Karir</h3>
+                        </div>
+                        <ul class="space-y-1.5 text-[9px] text-slate-300 flex-1">
+                            <li class="text-emerald-400 font-bold">• Analis Profesional</li>
+                            <li class="text-emerald-400 font-bold">• Trader Profesional</li>
+                            <li>• Tim Inti Leodra</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BAGIAN 2: MODUL VIDEO POLA -->
+            <div class="mb-8">
+                <h2 class="text-lg md:text-xl font-bold text-[#14213d] mb-1.5 flex items-center gap-2">
+                    <i data-lucide="candlestick-chart" class="w-5 h-5 text-blue-600"></i> 2. Modul Video Pola & Setup
+                </h2>
+                <p class="text-xs text-slate-500 mb-4">Pemahaman teknikal dasar hingga menengah mengenai pola pergerakan harga.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Video 1 -->
+                    <div class="bg-white border border-gray-200 shadow-sm video-card cursor-pointer group">
+                        <div class="w-full h-32 bg-slate-800 relative flex items-center justify-center overflow-hidden">
+                            <div class="absolute inset-0 play-overlay transition-all duration-300 flex items-center justify-center">
+                                <i data-lucide="play-circle" class="w-10 h-10 text-white/70 play-icon transition-all duration-300"></i>
+                            </div>
+                            <span class="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] px-1.5 py-0.5 font-mono">12:45</span>
+                        </div>
+                        <div class="p-3 border-t-2 border-transparent group-hover:border-blue-500 transition-colors">
+                            <span class="text-[9px] font-bold uppercase tracking-widest text-blue-600 mb-1 block">Modul 2.1</span>
+                            <h3 class="font-bold text-gray-900 mb-0.5 text-xs">Identifikasi Tren Valid</h3>
+                            <p class="text-[10px] text-gray-500 line-clamp-2">Cara akurat menentukan arah pasar sebelum mencari pola entry.</p>
+                        </div>
+                    </div>
+                    <!-- Video 2 -->
+                    <div class="bg-white border border-gray-200 shadow-sm video-card cursor-pointer group">
+                        <div class="w-full h-32 bg-slate-800 relative flex items-center justify-center overflow-hidden">
+                            <div class="absolute inset-0 play-overlay transition-all duration-300 flex items-center justify-center">
+                                <i data-lucide="play-circle" class="w-10 h-10 text-white/70 play-icon transition-all duration-300"></i>
+                            </div>
+                            <span class="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] px-1.5 py-0.5 font-mono">18:20</span>
+                        </div>
+                        <div class="p-3 border-t-2 border-transparent group-hover:border-blue-500 transition-colors">
+                            <span class="text-[9px] font-bold uppercase tracking-widest text-blue-600 mb-1 block">Modul 2.2</span>
+                            <h3 class="font-bold text-gray-900 mb-0.5 text-xs">Pola Reversal vs Continuation</h3>
+                            <p class="text-[10px] text-gray-500 line-clamp-2">Membedakan pola penerusan tren dengan pola pembalikan arah.</p>
+                        </div>
+                    </div>
+                    <!-- Video 3 -->
+                    <div class="bg-white border border-gray-200 shadow-sm video-card cursor-pointer group">
+                        <div class="w-full h-32 bg-slate-800 relative flex items-center justify-center overflow-hidden">
+                            <div class="absolute inset-0 play-overlay transition-all duration-300 flex items-center justify-center">
+                                <i data-lucide="play-circle" class="w-10 h-10 text-white/70 play-icon transition-all duration-300"></i>
+                            </div>
+                            <span class="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] px-1.5 py-0.5 font-mono">24:15</span>
+                        </div>
+                        <div class="p-3 border-t-2 border-transparent group-hover:border-blue-500 transition-colors">
+                            <span class="text-[9px] font-bold uppercase tracking-widest text-blue-600 mb-1 block">Modul 2.3</span>
+                            <h3 class="font-bold text-gray-900 mb-0.5 text-xs">Setup Entry Probabilitas Tinggi</h3>
+                            <p class="text-[10px] text-gray-500 line-clamp-2">Kriteria wajib yang harus dipenuhi sebelum mengeksekusi pola.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BAGIAN 3 & 4: PRAKTIK (BACKTEST & FORWARDTEST) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                <!-- Modul 3: Backtest -->
+                <div>
+                    <h2 class="text-lg md:text-xl font-bold text-[#14213d] mb-1.5 flex items-center gap-2">
+                        <i data-lucide="history" class="w-5 h-5 text-emerald-600"></i> 3. Cara Backtest
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-3">Metodologi pengujian strategi di data masa lalu.</p>
+                    
+                    <div class="bg-white border border-gray-200 shadow-sm video-card cursor-pointer group">
+                        <div class="w-full h-40 bg-slate-900 relative flex items-center justify-center overflow-hidden border-b border-emerald-500">
+                            <div class="absolute inset-0 play-overlay transition-all duration-300 flex items-center justify-center">
+                                <i data-lucide="play-circle" class="w-12 h-12 text-emerald-500/80 play-icon transition-all duration-300"></i>
+                            </div>
+                            <span class="absolute top-2 left-2 bg-emerald-500 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5">Penting</span>
+                            <span class="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] px-1.5 py-0.5 font-mono">35:10</span>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-bold text-sm text-gray-900 mb-1">Panduan Komprehensif Backtest Leodra</h3>
+                            <p class="text-[11px] text-gray-600">Pelajari cara mengumpulkan sampel data, menghitung *win rate*, dan menemukan kelemahan strategi Anda sebelum masuk ke akun real.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modul 4: Forwardtest -->
+                <div>
+                    <h2 class="text-lg md:text-xl font-bold text-[#14213d] mb-1.5 flex items-center gap-2">
+                        <i data-lucide="activity" class="w-5 h-5 text-amber-600"></i> 4. Metode Forwardtest
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-3">Praktik simulasi *real-time* menggunakan Beranda Analis.</p>
+                    
+                    <div class="bg-white border border-gray-200 shadow-sm video-card cursor-pointer group">
+                        <div class="w-full h-40 bg-slate-900 relative flex items-center justify-center overflow-hidden border-b border-amber-500">
+                            <div class="absolute inset-0 play-overlay transition-all duration-300 flex items-center justify-center">
+                                <i data-lucide="play-circle" class="w-12 h-12 text-amber-500/80 play-icon transition-all duration-300"></i>
+                            </div>
+                            <span class="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] px-1.5 py-0.5 font-mono">42:05</span>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-bold text-sm text-gray-900 mb-1">Simulasi Real Market di Terminal Analis</h3>
+                            <p class="text-[11px] text-gray-600">Cara menggunakan fitur *Pending, Running, History* di Beranda Analis LEODRA untuk melatih mental dan mengumpulkan data forward test akurat.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BAGIAN 5: MODUL EKSKLUSIF INTERNAL LEODRA -->
+            <div class="bg-slate-50 border border-slate-200 p-4 md:p-6 rounded-none mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 gap-3">
+                    <div>
+                        <h2 class="text-lg md:text-xl font-bold text-[#14213d] flex items-center gap-2 mb-0.5">
+                            <i data-lucide="lock" class="w-5 h-5 text-rose-600"></i> 5. Modul Eksklusif Internal LEODRA
+                        </h2>
+                        <p class="text-xs text-slate-500">10 Materi rahasia dapur LEODRA untuk pembentukan trader institusional.</p>
+                    </div>
+                    <span class="bg-[#14213d] text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1 shadow-sm">Akses Premium</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <!-- Generate 10 Videos -->
+                    <script>
+                        const eksklusifTitles = [
+                            "Mekanika Liquiditas Bank", "Algoritma Market Maker", "Manajemen Portofolio", 
+                            "Pemulihan Drawdown Ekstrem", "Scaling In & Out", "Korelasi Aset Lanjutan",
+                            "Psikologi Angka & Lot Size", "Membaca Depth of Market", "Hedging Defensif", "Road to Prop Firm Master"
+                        ];
+                        let htmlModulEksklusif = '';
+                        for(let i=0; i<10; i++) {
+                            htmlModulEksklusif += `
+                            <div class="bg-white border border-slate-200 shadow-sm hover:border-rose-300 hover:shadow-md transition-all cursor-pointer group">
+                                <div class="w-full h-16 sm:h-20 bg-slate-800 relative flex items-center justify-center overflow-hidden">
+                                    <div class="absolute inset-0 bg-slate-900/60 group-hover:bg-slate-900/40 transition-colors"></div>
+                                    <i data-lucide="play" class="w-6 h-6 text-white/50 group-hover:text-rose-500 group-hover:scale-110 transition-all z-10"></i>
+                                    <span class="absolute top-1 left-1 bg-rose-600 text-white text-[8px] font-bold px-1 py-0.5 rounded-sm">V. ${i+1}</span>
+                                </div>
+                                <div class="p-2">
+                                    <h3 class="font-bold text-[#14213d] text-[10px] leading-tight line-clamp-2">${eksklusifTitles[i]}</h3>
+                                </div>
+                            </div>`;
+                        }
+                        document.write(htmlModulEksklusif);
+                    </script>
+                </div>
+            </div>
+
+            <!-- BAGIAN 6: KUIS PSIKOLOGI TRADING (TAMPILAN BARU PUTIH & CLEAN) -->
+            <div class="bg-white border border-gray-200 p-5 md:p-8 mb-8 relative shadow-sm">
+                
+                <div class="relative z-10">
+                    <div class="text-center max-w-xl mx-auto mb-8">
+                        <span class="bg-emerald-50 text-emerald-600 border border-emerald-100 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-none mb-3 inline-block">Final Assessment</span>
+                        <h2 class="text-xl md:text-2xl font-bold text-[#14213d] mb-2 flex items-center justify-center gap-2">
+                            <i data-lucide="clipboard-list" class="w-6 h-6 text-emerald-600"></i> 6. Ujian Psikologi & Kedisiplinan
+                        </h2>
+                        <p class="text-xs text-slate-500">Jawab 20 studi kasus di bawah ini dengan jujur. Semakin tinggi skor Anda (Max 100), semakin siap mental Anda menghadapi market real.</p>
+                    </div>
+
+                    <div class="max-w-2xl mx-auto" id="quizAppContainer">
+                        
+                        <!-- Progress Bar -->
+                        <div id="quizProgressContainer" class="mb-6">
+                            <div class="flex justify-between items-end mb-2">
+                                <p id="quizProgressText" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pertanyaan 1 dari 20</p>
+                            </div>
+                            <div class="w-full bg-slate-100 h-1.5 rounded-none overflow-hidden">
+                                <div id="quizProgressBar" class="bg-emerald-500 h-1.5 rounded-none transition-all duration-300" style="width: 5%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Container Soal JS -->
+                        <div id="quizQuestionsContainer" class="mb-6 min-h-[160px]">
+                            <!-- Diisi oleh JS untuk satu per satu soal -->
+                        </div>
+
+                        <!-- Alert Hasil -->
+                        <div id="quizResultAlert" class="hidden mb-6 p-6 text-center font-bold border rounded-none animate-fade-in-quiz"></div>
+
+                        <!-- Navigasi Kuis -->
+                        <div id="quizControls" class="flex items-center justify-between mt-6 pt-5 border-t border-gray-100">
+                            <button type="button" id="prevQuizBtn" onclick="prevQuiz()" class="hidden items-center gap-1.5 px-3 py-2 text-[11px] font-bold text-slate-400 hover:text-[#14213d] transition-colors uppercase tracking-wider">
+                                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Sebelumnya
+                            </button>
+                            <div class="flex-1"></div>
+                            <button type="button" id="nextQuizBtn" onclick="nextQuiz()" class="flex items-center gap-1.5 bg-[#14213d] hover:bg-black text-white px-5 py-2.5 text-[11px] font-bold transition-colors uppercase tracking-wider shadow-sm rounded-none">
+                                Selanjutnya <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button type="button" id="submitQuizBtn" onclick="evaluatePsychologyQuiz()" class="hidden items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 text-[11px] font-bold transition-colors uppercase tracking-wider shadow-sm rounded-none">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Lihat Skor
+                            </button>
+                            <button type="button" id="retryQuizBtn" onclick="resetQuiz()" class="hidden items-center gap-1.5 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-5 py-2.5 text-[11px] font-bold transition-colors uppercase tracking-wider shadow-sm mx-auto rounded-none">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Ulangi Kuis
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ▼▼▼ FOOTER PROFESIONAL ▼▼▼ -->
+        <footer class="bg-[#0b1120] text-slate-400 mt-auto w-full border-t border-slate-800 relative z-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-8 md:gap-10 mb-10">
+                    <div class="col-span-1 sm:col-span-2 md:col-span-6 lg:col-span-5 text-center sm:text-left">
+                        <span class="font-light text-xl md:text-2xl tracking-widest text-white font-merriweather block mb-3 md:mb-4">LEODRA</span>
+                        <p class="text-xs leading-relaxed text-justify sm:text-left">
+                            Platform manajemen risiko dan analitik trading profesional. <br class="hidden lg:block mb-2">
+                            <strong class="text-slate-200">Keunggulan Eksklusif:</strong> Integrasi otomatis Backtest berbasis Excel (TF), presisi kustomisasi Take Profit/Risk Ratio dinamis, serta analitik probabilitas performa mendalam.
+                        </p>
+                    </div>
+
+                    <div class="col-span-1 md:col-span-4 lg:col-span-5 flex flex-col items-center sm:items-start md:pl-8 lg:pl-16 w-full">
+                        <h4 class="text-[10px] font-bold tracking-widest uppercase text-slate-500 mb-4 border-b border-slate-800 pb-2 w-full max-w-[200px] text-center sm:text-left">Menu Navigasi</h4>
+                        <div class="grid grid-cols-2 gap-x-4 md:gap-x-8 gap-y-3 text-[11px] font-bold tracking-wider uppercase text-slate-400 w-full max-w-[280px]">
+                            <a href="index.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Home</a>
+                            <a href="login.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Login</a>
+                            <a href="beranda.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Beranda Trader</a>
+                            <a href="berandaanalis.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Beranda Analis</a>
+                            
+                            <!-- MENU AKTIF FOOTER: EDUKASI -->
+                            <a href="edukasi.html" class="text-white flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-white"></i> <span class="border-b border-white pb-0.5">Edukasi</span></a>
+                            
+                            <a href="topanalisdantrader.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Top Analis Dan Trader</a>
+                            <a href="investasi.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Investasi</a>
+                            <a href="backtest.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Backtest</a>
+                            <a href="langganan.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Langganan</a>
+                            <a href="pengaturan.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Pengaturan</a>
+                        </div>
+                    </div>
+
+                    <div class="col-span-1 md:col-span-2 lg:col-span-2 flex flex-col items-center sm:items-start md:items-end w-full">
+                        <h4 class="text-[10px] font-bold tracking-widest uppercase text-slate-500 mb-4 border-b border-slate-800 pb-2 w-full max-w-[150px] md:max-w-[120px] text-center sm:text-left md:text-right">Terhubung</h4>
+                        <div class="flex flex-row md:flex-col items-center sm:items-start md:items-end gap-4 md:gap-3">
+                            <a href="#" class="flex items-center gap-2 hover:text-white transition-colors group">
+                                <span class="text-[11px] font-bold tracking-wider uppercase hidden md:block">Instagram</span>
+                                <i data-lucide="instagram" class="w-5 h-5 md:w-4 md:h-4 group-hover:scale-110"></i>
+                            </a>
+                            <a href="https://wa.me/6281234567890" target="_blank" class="flex items-center gap-2 hover:text-white transition-colors group">
+                                <span class="text-[11px] font-bold tracking-wider uppercase hidden md:block">Support WA</span>
+                                <i data-lucide="message-circle" class="w-5 h-5 md:w-4 md:h-4 group-hover:scale-110"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-800 pt-6 flex flex-col lg:flex-row justify-between items-center gap-4 md:gap-6 text-[10px] text-slate-500 text-center lg:text-left">
+                    <div class="max-w-4xl leading-relaxed">
+                        <strong class="text-slate-400">Peringatan Risiko:</strong> Trading pada instrumen keuangan membawa tingkat risiko tinggi. LEODRA adalah platform analitik dan penyedia layanan copytrade mandiri, bukan manajer investasi.
+                    </div>
+                    
+                    <div class="flex flex-col items-center lg:items-end gap-2 flex-shrink-0">
+                        <p>&copy; 2026 LEODRA Analytics. Hak Cipta Dilindungi.</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ▼▼▼ LOGIKA JAVASCRIPT GABUNGAN ▼▼▼ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if(window.lucide) window.lucide.createIcons();
+            
+            // Panggil Header Time dan Setup Sinkronisasi User Data (Terpusat)
+            updateHeaderTime();
+            setInterval(updateHeaderTime, 1000);
+            loadUserData();
+
+            const chartContainer = document.getElementById('chart-container');
+            if (chartContainer) {
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) { initChart(); observer.disconnect(); }
+                }, { threshold: 0.2 });
+                observer.observe(chartContainer);
+            }
+
+            // Inisialisasi Kuis Psikologi
+            initQuiz();
+        });
+
+        // --- DATA SOAL KUIS PSIKOLOGI (20 SOAL) ---
+        const psychQuestions = [
+            { q: "Anda mengalami 3 kali Stop Loss berturut-turut. Apa yang langsung Anda lakukan?", good: "Menutup chart, rehat sejenak, dan mengevaluasi jurnal trading.", bad: "Membesarkan lot di trade berikutnya untuk membalas kerugian (Revenge Trading)." },
+            { q: "Harga bergerak sangat cepat naik tanpa konfirmasi setup Anda. Bagaimana respons Anda?", good: "Membiarkannya pergi. Saya hanya masuk jika setup sesuai rencana (No FOMO).", bad: "Langsung buy market karena takut tertinggal keuntungan besar." },
+            { q: "Harga sedikit lagi menyentuh Stop Loss Anda. Apa tindakan Anda?", good: "Menerima kerugian sesuai rencana awal.", bad: "Menggeser Stop Loss lebih jauh agar tidak terkena kerugian." },
+            { q: "Anda sedang floating profit, tetapi harga berbalik sedikit. Apa yang Anda lakukan?", good: "Tetap tenang dan menunggu harga menyentuh TP atau trailing stop.", bad: "Langsung menutup posisi secara manual karena takut profit berubah jadi loss." },
+            { q: "Berapa persen batas risiko maksimal (Risk per Trade) Anda dalam satu kali open posisi?", good: "Antara 1% hingga maksimal 2% dari total modal.", bad: "Lebih dari 10% atau bahkan *All in* jika saya sangat yakin." },
+            { q: "Teman Anda memamerkan profit besar di grup menggunakan strategi yang berbeda. Reaksi Anda?", good: "Turut senang untuknya, tetapi tetap fokus disiplin pada strategi saya sendiri.", bad: "Langsung mengganti strategi saya dan mengikuti cara teman saya." },
+            { q: "Anda menemukan setup yang sangat bagus, tapi Anda sedang dalam kondisi marah/stres di luar urusan trading.", good: "Tidak mengambil trade tersebut sampai pikiran saya benar-benar tenang.", bad: "Tetap masuk ke market untuk mencari pelampiasan atau hiburan." },
+            { q: "Apa definisi 'Trading Plan' menurut Anda?", good: "Aturan tertulis yang wajib diikuti tanpa emosi, mencakup Entry, SL, TP, dan manajemen risiko.", bad: "Hanya sekedar coretan analisa, eksekusi bisa berubah sesuai perasaan di market." },
+            { q: "Anda sudah mencapai target profit mingguan di hari Selasa. Apa langkah selanjutnya?", good: "Menurunkan risiko lot, atau berhenti trading dan menikmati profit.", bad: "Meningkatkan ukuran lot karena merasa sedang beruntung dan 'tak terkalahkan'." },
+            { q: "Harga menyentuh TP Anda dan terus naik tinggi. Apa yang Anda rasakan?", good: "Puas karena disiplin menjalankan plan. Profit yang didapat sudah cukup.", bad: "Sangat menyesal dan marah pada diri sendiri karena tidak menahan posisi lebih lama." },
+            { q: "Menurut Anda, siapa penggerak market dan apa posisi Anda?", good: "Institusi besar. Tugas saya hanya mengikuti jejak likuiditas mereka.", bad: "Saya bisa memprediksi dan melawan arah market jika saya analisa dengan benar." },
+            { q: "Jika strategi Anda memiliki Win Rate 40% namun Risk:Reward 1:3, pandangan Anda?", good: "Sangat bagus. Secara statistik dalam jangka panjang akun akan terus bertumbuh.", bad: "Buruk. Saya mencari strategi dengan Win Rate 90% agar jarang mengalami loss." },
+            { q: "Sebuah berita fundamental besar rilis (NFP) dan market bergerak liar.", good: "Menjauh dari market sampai pergerakan harga kembali stabil dan rasional.", bad: "Masuk menggunakan lot besar untuk mencari peruntungan arah berita." },
+            { q: "Anda tidak menemukan setup yang sesuai dengan sistem Anda selama 3 hari beruntun.", good: "Sabar menunggu. Tidak open posisi juga merupakan sebuah posisi yang aman.", bad: "Memaksakan mencari-cari peluang atau menurunkan standar setup agar bisa trading." },
+            { q: "Posisi Anda sedang loss besar, apa yang terlintas di pikiran?", good: "Ini pelajaran bahwa saya melanggar batas risiko. Segera cut loss dan evaluasi.", bad: "Menambah posisi lagi (Averaging down) dengan harapan harga berbalik arah." },
+            { q: "Tujuan utama Anda membuka platform LEODRA setiap pagi adalah untuk...", good: "Mengeksekusi rencana bisnis dengan disiplin dan menjaga aset.", bad: "Mencari uang cepat untuk membayar tagihan bulan ini." },
+            { q: "Saat melihat chart, fokus utama Anda tertuju pada apa?", good: "Mencari di mana titik invalidasi (Stop Loss) yang paling logis sebelum entry.", bad: "Membayangkan berapa banyak uang yang akan didapat jika analisa ini benar." },
+            { q: "Setelah loss, apakah Anda langsung membuka chart aset (pair) lain?", good: "Tidak. Saya menerima hasil trade tersebut dan menutup terminal.", bad: "Ya, saya mencari peluang di aset lain untuk menutupi loss hari ini." },
+            { q: "Bagaimana cara Anda memandang Stop Loss?", good: "Biaya asuransi bisnis untuk melindungi modal dari kehancuran total.", bad: "Sesuatu yang menjengkelkan dan alat bandar untuk mengalahkan saya." },
+            { q: "Ketika menekan tombol 'Buy' atau 'Sell', apa status mental Anda?", good: "Saya sudah sepenuhnya menerima risiko kehilangan dana di trade ini sebelum masuk.", bad: "Saya sangat cemas dan terus menatap chart setiap menit berharap harga naik." }
+        ];
+
+        // --- LOGIKA KUIS (PAGINATION) ---
+        let currentQuizIndex = 0;
+        let userAnswers = new Array(psychQuestions.length).fill(null);
+
+        function initQuiz() {
+            // Acak opsi jawaban di awal agar tidak berubah saat prev/next
+            psychQuestions.forEach(q => {
+                q.isGoodA = Math.random() > 0.5;
+                q.optA = q.isGoodA ? q.good : q.bad;
+                q.valA = q.isGoodA ? 'good' : 'bad';
+                q.optB = !q.isGoodA ? q.good : q.bad;
+                q.valB = !q.isGoodA ? 'good' : 'bad';
+            });
+            renderSingleQuestion();
+        }
+
+        function renderSingleQuestion() {
+            const container = document.getElementById('quizQuestionsContainer');
+            const q = psychQuestions[currentQuizIndex];
+            
+            // Update Progress
+            document.getElementById('quizProgressText').innerText = `Pertanyaan ${currentQuizIndex + 1} dari ${psychQuestions.length}`;
+            document.getElementById('quizProgressBar').style.width = `${((currentQuizIndex + 1) / psychQuestions.length) * 100}%`;
+
+            // Style border untuk opsi yang dipilih
+            const isSelectedA = userAnswers[currentQuizIndex] === q.valA;
+            const isSelectedB = userAnswers[currentQuizIndex] === q.valB;
+
+            // HTML Soal
+            container.innerHTML = `
+                <div class="animate-fade-in-quiz">
+                    <p class="font-bold text-[#14213d] mb-4 text-sm md:text-base leading-relaxed">
+                        <span class="text-emerald-600 font-mono text-base mr-1">${currentQuizIndex + 1}.</span> ${q.q}
+                    </p>
+                    <div class="space-y-3">
+                        <label class="flex items-start gap-3 p-4 bg-slate-50 hover:bg-slate-100 cursor-pointer rounded-none border ${isSelectedA ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200'} transition-all group">
+                            <input type="radio" name="quizOption" value="${q.valA}" class="mt-0.5 w-4 h-4 text-emerald-600 bg-white border-gray-300 focus:ring-emerald-500" ${isSelectedA ? 'checked' : ''} onchange="selectAnswer('${q.valA}')">
+                            <span class="text-xs md:text-sm text-gray-700 leading-relaxed group-hover:text-gray-900">${q.optA}</span>
+                        </label>
+                        <label class="flex items-start gap-3 p-4 bg-slate-50 hover:bg-slate-100 cursor-pointer rounded-none border ${isSelectedB ? 'border-emerald-500 bg-emerald-50/50' : 'border-gray-200'} transition-all group">
+                            <input type="radio" name="quizOption" value="${q.valB}" class="mt-0.5 w-4 h-4 text-emerald-600 bg-white border-gray-300 focus:ring-emerald-500" ${isSelectedB ? 'checked' : ''} onchange="selectAnswer('${q.valB}')">
+                            <span class="text-xs md:text-sm text-gray-700 leading-relaxed group-hover:text-gray-900">${q.optB}</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+
+            // Atur Tombol Navigasi
+            document.getElementById('prevQuizBtn').style.display = currentQuizIndex === 0 ? 'none' : 'flex';
+            
+            if (currentQuizIndex === psychQuestions.length - 1) {
+                document.getElementById('nextQuizBtn').style.display = 'none';
+                document.getElementById('submitQuizBtn').style.display = 'flex';
+            } else {
+                document.getElementById('nextQuizBtn').style.display = 'flex';
+                document.getElementById('submitQuizBtn').style.display = 'none';
+            }
+        }
+
+        window.selectAnswer = function(val) {
+            userAnswers[currentQuizIndex] = val;
+            renderSingleQuestion(); // Render ulang untuk mengganti warna border jawaban aktif
+        };
+
+        window.nextQuiz = function() {
+            if (!userAnswers[currentQuizIndex]) {
+                alert("Silakan pilih salah satu jawaban terlebih dahulu untuk melanjutkan.");
+                return;
+            }
+            if (currentQuizIndex < psychQuestions.length - 1) {
+                currentQuizIndex++;
+                renderSingleQuestion();
+            }
+        };
+
+        window.prevQuiz = function() {
+            if (currentQuizIndex > 0) {
+                currentQuizIndex--;
+                renderSingleQuestion();
+            }
+        };
+
+        window.evaluatePsychologyQuiz = function() {
+            if (!userAnswers[currentQuizIndex]) {
+                alert("Silakan pilih salah satu jawaban terlebih dahulu sebelum melihat skor.");
+                return;
+            }
+
+            let score = 0;
+            const pointPerQuestion = 100 / psychQuestions.length;
+
+            userAnswers.forEach(answer => {
+                if (answer === 'good') {
+                    score += pointPerQuestion;
+                }
+            });
+
+            // Sembunyikan Soal & Progress Bar, Tampilkan Alert & Tombol Ulangi
+            document.getElementById('quizQuestionsContainer').style.display = 'none';
+            document.getElementById('quizProgressContainer').style.display = 'none';
+            document.getElementById('prevQuizBtn').style.display = 'none';
+            document.getElementById('submitQuizBtn').style.display = 'none';
+            
+            const alertBox = document.getElementById('quizResultAlert');
+            alertBox.classList.remove('hidden');
+            document.getElementById('retryQuizBtn').style.display = 'flex';
+
+            let gradeClass, title, message;
+
+            if (score >= 90) {
+                gradeClass = "border-emerald-200 bg-emerald-50 text-emerald-800";
+                title = "🏆 Luar Biasa! Level Master Psikologi";
+                message = "Pola pikir dan kedisiplinan Anda sudah setara dengan trader profesional institusi. Anda sangat siap menghadapi real market.";
+            } else if (score >= 70) {
+                gradeClass = "border-blue-200 bg-blue-50 text-blue-800";
+                title = "👍 Sangat Baik! Level Disiplin Stabil";
+                message = "Mental trading Anda sudah terbentuk kuat. Perbaiki sedikit kebiasaan emosional di beberapa situasi agar lebih sempurna.";
+            } else if (score >= 50) {
+                gradeClass = "border-amber-200 bg-amber-50 text-amber-800";
+                title = "⚠️ Cukup! Level Emosional Fluktuatif";
+                message = "Anda masih sering membiarkan emosi mengambil alih logika. Disarankan untuk kembali melatih mental di akun Demo/Forwardtest.";
+            } else {
+                gradeClass = "border-rose-200 bg-rose-50 text-rose-800";
+                title = "⛔ Bahaya! Level Penjudi (Gambler)";
+                message = "Psikologi trading Anda sangat berisiko tinggi. Jika Anda trading menggunakan uang asli saat ini, kemungkinan besar akan hancur (Margin Call). Wajib belajar kembali Modul 1!";
+            }
+
+            alertBox.className = `mb-6 p-6 font-bold border rounded-none animate-fade-in-quiz ${gradeClass}`;
+            alertBox.innerHTML = `
+                <div class="text-3xl font-mono mb-2 text-[#14213d]">${Math.round(score)}<span class="text-lg text-slate-500">/100</span></div>
+                <div class="text-base mb-1.5 font-bold">${title}</div>
+                <div class="text-[11px] md:text-xs font-medium opacity-90 leading-relaxed max-w-lg mx-auto">${message}</div>
+            `;
+            
+            alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+
+        window.resetQuiz = function() {
+            currentQuizIndex = 0;
+            userAnswers.fill(null);
+            
+            document.getElementById('quizQuestionsContainer').style.display = 'block';
+            document.getElementById('quizProgressContainer').style.display = 'block';
+            document.getElementById('quizResultAlert').classList.add('hidden');
+            document.getElementById('retryQuizBtn').style.display = 'none';
+            
+            initQuiz();
+        };
+
+        // --- CHART JS (DIAMBIL DARI CODE LAMA & DIRAPIKAN) ---
+        function initChart() {
+            const chartCanvas = document.getElementById('learningCurveChart');
+            const ctx = chartCanvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)'); 
+            gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+            
+            const dataPoints = [0, 20, 10, 40, 25, 60, 45, 80, 65, 100];
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [['Start', 'Belajar'], ['1. Pemahaman', 'Forex'], ['Mental Diuji', '(Drawdown)'], ['2. Analisa', 'Market'], ['Konsolidasi', 'Psikologi'], ['3. Konsep', 'Trading'], ['Adaptasi', 'Evaluasi'], ['4. Trading', 'Prop Firm'], ['Ujian Mental', 'Akhir'], ['5. Karir', 'Profesional']],
+                    datasets: [{
+                        label: 'Progres (%)', data: dataPoints, borderColor: '#10b981', backgroundColor: gradient,
+                        borderWidth: 3, pointBackgroundColor: '#ffffff', pointBorderColor: '#10b981',
+                        pointBorderWidth: 3, pointRadius: 5, pointHoverRadius: 8, fill: true, tension: 0.35
+                    }]
+                },
+                options: {
+                    animation: {
+                        y: { duration: 1800, easing: 'easeOutQuart', from: (ctx) => ctx.type === 'data' ? ctx.chart.scales.y.getPixelForValue(0) : 0, delay: (ctx) => ctx.type === 'data' ? ctx.index * 150 : 0 },
+                        x: { duration: 1800, easing: 'easeOutQuart', delay: (ctx) => ctx.type === 'data' ? ctx.index * 150 : 0 }
+                    },
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 110, grid: { borderDash: [5, 5], color: '#f1f5f9' }, ticks: { font: { size: 10 }, color: '#94a3b8', stepSize: 20 } },
+                        x: { grid: { display: false }, ticks: { font: { weight: 'bold', size: 9 }, color: '#475569', maxRotation: 0, minRotation: 0, align: 'center' } }
+                    }
+                }
+            });
+        }
+
+        // Waktu & Tanggal
+        function updateHeaderTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).replace(/\./g, ':');
+            const dateStr = now.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+            const elClock = document.getElementById("headerRealTimeClock"); if (elClock) elClock.textContent = timeStr;
+            const elDate = document.getElementById("headerRealTimeDate"); if (elDate) elDate.textContent = dateStr;
+        }
+
+        // Toggle Mobile Menu
+        window.toggleMenu = function() {
+            const m = document.getElementById('mobile-menu');
+            const iconMenu = document.getElementById('icon-menu');
+            const iconClose = document.getElementById('icon-close');
+            
+            if(m) { 
+                m.classList.toggle('translate-x-full'); 
+                const isOpen = !m.classList.contains('translate-x-full');
+                
+                // Atur agar body tidak bisa di-scroll saat menu terbuka
+                document.body.style.overflow = isOpen ? 'hidden' : 'auto'; 
+                
+                // Logika Animasi Tombol
+                if(isOpen) {
+                    if(iconMenu) { iconMenu.classList.remove('scale-100', 'rotate-0', 'opacity-100'); iconMenu.classList.add('scale-0', 'rotate-90', 'opacity-0'); }
+                    if(iconClose) { iconClose.classList.remove('scale-0', '-rotate-90', 'opacity-0'); iconClose.classList.add('scale-100', 'rotate-0', 'opacity-100'); }
+                } else {
+                    if(iconClose) { iconClose.classList.remove('scale-100', 'rotate-0', 'opacity-100'); iconClose.classList.add('scale-0', '-rotate-90', 'opacity-0'); }
+                    if(iconMenu) { iconMenu.classList.remove('scale-0', 'rotate-90', 'opacity-0'); iconMenu.classList.add('scale-100', 'rotate-0', 'opacity-100'); }
+                }
+            }
+        }
+        
+        // Toggle Desktop Sidebar
+        window.toggleSidebarCollapse = function() {
+            const sidebar = document.getElementById('desktop-sidebar');
+            const wrapper = document.getElementById('main-wrapper');
+            sidebar.classList.toggle('is-collapsed');
+            
+            if (sidebar.classList.contains('is-collapsed')) {
+                wrapper.classList.remove('md:ml-64', 'md:w-[calc(100%-16rem)]'); 
+                wrapper.classList.add('md:ml-[5.5rem]', 'md:w-[calc(100%-5.5rem)]');
+            } else {
+                wrapper.classList.add('md:ml-64', 'md:w-[calc(100%-16rem)]'); 
+                wrapper.classList.remove('md:ml-[5.5rem]', 'md:w-[calc(100%-5.5rem)]');
+            }
+        }
+
+        // Load Data Akun (Sinkronisasi dengan Google)
+        function loadUserData() {
+            const userStr = localStorage.getItem("user");
+            const mobileAvatar = document.getElementById('mobile-user-avatar');
+            const desktopAvatar = document.getElementById('desktop-user-avatar');
+            const desktopUser = document.getElementById('desktop-user-info');
+            const mobileUserName = document.getElementById('mobile-user-name');
+            const mobileUserEmail = document.getElementById('mobile-user-email');
+            const mobileTime = document.getElementById('mobile-user-time');
+            
+            if(userStr) {
+                try {
+                    const u = JSON.parse(userStr); 
+                    const name = u.name || u.email || "User"; 
+                    const email = u.email || "";
+                    let regTime = u.timestamp || "Aktif";
+                    
+                    // Set Desktop Info (Nama dengan font eksklusif)
+                    if(desktopUser) desktopUser.innerHTML = name;
+                    
+                    // Set Mobile Info (Nama & Email dengan font eksklusif)
+                    if(mobileUserName) mobileUserName.textContent = name;
+                    if(mobileUserEmail) mobileUserEmail.textContent = email;
+                    if(mobileTime) mobileTime.textContent = regTime;
+                    
+                    // Setel Foto Profil Lingkaran (Prioritas dari Google: u.picture)
+                    const avatarUrl = u.picture || u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0f172a&color=fff&bold=true`;
+                    if(mobileAvatar) mobileAvatar.src = avatarUrl;
+                    if(desktopAvatar) desktopAvatar.src = avatarUrl;
+                    
+                } catch(e){}
+            } else {
+                if(desktopUser) { desktopUser.textContent = "Mode Tamu"; desktopUser.className = "text-xs font-light text-gray-600 leading-tight mt-1"; }
+                if(mobileUserName) mobileUserName.textContent = "Guest";
+                if(mobileUserEmail) mobileUserEmail.textContent = "Belum login";
+                if(mobileAvatar) mobileAvatar.src = `https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff&bold=true`;
+                if(desktopAvatar) desktopAvatar.src = `https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff&bold=true`;
+            }
+        }
+        
+        window.logout = function() {
+            if(confirm("Keluar dari sesi ini?")) { localStorage.removeItem("user"); localStorage.removeItem("token"); window.location.href='login.html'; }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Top Analis Dan Trader - LEODRA</title>
+
+    <!-- FIX: Script Anti-Error ResizeObserver -->
+    <script>
+      const _originalError = console.error;
+      console.error = (...args) => {
+        if (/ResizeObserver loop/.test(args[0])) return;
+        _originalError.apply(console, args);
+      };
+      window.addEventListener('error', e => {
+        if (e.message === 'ResizeObserver loop limit exceeded') {
+          e.stopImmediatePropagation();
+        }
+      });
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Merriweather:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Gaya Global & Font Khusus Header */
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f8fafc; 
+            color: #334155; 
+            margin: 0;
+            padding: 0;
+        }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 0; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .font-merriweather { font-family: 'Merriweather', serif; }
+
+        @media screen and (min-width: 1280px) { body { zoom: 0.8; } }
+        
+        main { margin-top: 6rem !important; }
+        @media screen and (min-width: 768px) { main { margin-top: 7rem !important; } }
+        
+        /* Sidebar Animasi & Collapse */
+        #desktop-sidebar { 
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            overflow-x: hidden; 
+            white-space: nowrap; 
+        }
+        #desktop-sidebar.is-collapsed { width: 5.5rem; }
+        #desktop-sidebar.is-collapsed:hover { width: 16rem; box-shadow: 4px 0 24px rgba(0,0,0,0.08); }
+        
+        #desktop-sidebar.is-collapsed:not(:hover) a.flex,
+        #desktop-sidebar.is-collapsed:not(:hover) button.flex {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            justify-content: center !important;
+        }
+
+        .sidebar-text { 
+            transition: opacity 0.2s, max-width 0.3s; 
+            max-width: 200px; 
+            overflow: hidden; 
+            display: inline-block;
+            vertical-align: middle;
+        }
+        #desktop-sidebar.is-collapsed:not(:hover) .sidebar-text { opacity: 0; max-width: 0; }
+        #desktop-sidebar.is-collapsed:not(:hover) .sidebar-icon-margin { margin-right: 0; }
+        .sidebar-icon-margin { transition: margin-right 0.3s; margin-right: 0.75rem; }
+        
+        #toggle-sidebar-btn { transition: transform 0.3s; }
+        #desktop-sidebar.is-collapsed:not(:hover) #toggle-sidebar-btn { transform: rotate(180deg); }
+        
+        #main-wrapper { transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* Corporate Styles for Leaderboard Numbers */
+        .rank-text-1 { color: #d4af37; font-size: 1.75rem; } 
+        .rank-text-2 { color: #94a3b8; font-size: 1.5rem; } 
+        .rank-text-3 { color: #b45309; font-size: 1.5rem; } 
+        .rank-text-other { color: #cbd5e1; font-size: 1.25rem; }
+        
+        /* Subtle Avatars */
+        .avatar-corporate-top { background-color: #0f172a; color: #ffffff; }
+        .avatar-corporate-reg { background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+        .leaderboard-card { transition: all 0.2s ease-in-out; }
+        .leaderboard-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); border-color: #cbd5e1; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- ▼▼▼ HEADER UTAMA LEODRA ▼▼▼ -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-gray-200 fixed top-0 w-full z-50 transition-all duration-300 h-20 md:h-24">
+        <div class="w-full h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
+            
+            <!-- 1. LOGO (KIRI) -->
+            <div class="flex items-center flex-shrink-0 cursor-pointer" onclick="window.location.href='index.html'">
+                <span class="font-light text-xl md:text-2xl tracking-widest text-black font-merriweather">LEODRA</span>
+            </div>
+
+            <!-- 2. INDIKATOR WAKTU & TANGGAL (TENGAH) -->
+            <div class="flex-1 flex flex-col justify-center items-center px-1 overflow-hidden">
+                <span id="headerRealTimeClock" class="text-red-600 font-medium text-[11px] sm:text-[12px] md:text-sm tracking-wide leading-none whitespace-nowrap mb-0.5" style="font-family: 'Inter', sans-serif;">
+                    --:--:--
+                </span>
+                <span id="headerRealTimeDate" class="text-black font-light text-[9px] sm:text-[10px] md:text-xs tracking-wide leading-none whitespace-nowrap truncate max-w-full" style="font-family: 'Inter', sans-serif;">
+                    -- -- ----
+                </span>
+            </div>
+
+            <!-- 3. AREA KANAN (USER & MENU MOBILE) -->
+            <div class="flex items-center justify-end gap-2 md:gap-4 flex-shrink-0 min-w-[60px]">
+                <div class="hidden md:flex items-center gap-4">
+                    <div class="text-right">
+                        <p id="desktop-user-info" class="text-sm font-light tracking-wide text-gray-900 leading-tight font-merriweather">Loading...</p>
+                        <div class="flex items-center justify-end gap-1.5 mt-1">
+                            <div class="w-1.5 h-1.5 rounded-none bg-green-500 animate-pulse"></div>
+                            <span class="text-[10px] text-green-600 font-bold tracking-wider uppercase">Online</span>
+                        </div>
+                    </div>
+                    <img id="desktop-user-avatar" src="https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff" alt="Profil User" class="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm flex-shrink-0">
+                </div>
+                
+                <button onclick="toggleMenu()" id="mobile-menu-btn" class="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-none transition-colors relative w-10 h-10 flex items-center justify-center overflow-hidden" aria-label="Toggle Menu">
+                    <span id="icon-menu" class="absolute transition-all duration-300 transform scale-100 rotate-0 opacity-100 flex items-center justify-center w-full h-full">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </span>
+                    <span id="icon-close" class="absolute transition-all duration-300 transform scale-0 -rotate-90 opacity-0 flex items-center justify-center w-full h-full text-rose-600">
+                        <i data-lucide="x" class="w-7 h-7"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ▼▼▼ MENU MOBILE (OVERLAY) ▼▼▼ -->
+    <div id="mobile-menu" class="fixed inset-0 bg-white z-[40] transform translate-x-full transition-transform duration-300 md:hidden flex flex-col pt-20">
+        
+        <div class="flex-shrink-0 px-4 pt-4 pb-2 bg-white border-b border-gray-100 z-10 shadow-sm relative">
+            <div class="bg-[#0a0a0a] p-5 rounded-none border border-gray-800 shadow-xl">
+                <div class="flex items-center gap-4 mb-4">
+                    <img id="mobile-user-avatar" src="https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff" alt="Profil User" class="w-12 h-12 rounded-full object-cover border-2 border-gray-600 shadow-md flex-shrink-0">
+                    <div class="overflow-hidden w-full">
+                        <p class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-1">Identitas Sesi</p>
+                        <p id="mobile-user-name" class="text-base font-light tracking-wide text-white truncate font-merriweather mb-0.5">Guest</p>
+                        <p id="mobile-user-email" class="text-xs font-light text-gray-400 truncate font-merriweather">Belum login</p>
+                    </div>
+                </div>
+                <div class="border-t border-gray-800 pt-3 flex justify-between items-center">
+                    <div>
+                        <p class="text-[9px] text-gray-500 font-bold mb-1 uppercase tracking-widest">Status</p>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2 h-2 rounded-none bg-green-500 animate-pulse"></div>
+                            <span class="text-[10px] text-green-500 font-bold uppercase tracking-wider">Online</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[9px] text-gray-500 font-bold mb-1 uppercase tracking-widest">Sesi Aktif</p>
+                        <p id="mobile-user-time" class="text-[10px] sm:text-xs font-mono text-blue-400 font-medium">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto px-4 py-4 pb-10 flex flex-col gap-2 text-sm bg-white">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Menu Utama</p>
+            <a href="index.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Home</span> <i data-lucide="calculator" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="login.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-medium transition-colors"><span>Login</span> <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="beranda.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Beranda Trader</span> <i data-lucide="layout-dashboard" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="berandaanalis.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Beranda Analis</span> <i data-lucide="activity" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="edukasi.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Education for Student</span> <i data-lucide="graduation-cap" class="w-4 h-4 text-gray-400"></i></a>
+            
+            <!-- MENU AKTIF MOBILE : TOP ANALIS & TRADER -->
+            <a href="topanalisdantrader.html" class="flex items-center justify-between p-3.5 rounded-none text-[#14213d] bg-[#14213d]/5 border border-[#14213d]/10 font-bold"><span>Top Analis Dan Trader</span> <i data-lucide="award" class="w-4 h-4 text-[#14213d]"></i></a>
+            <a href="investasi.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Investasi</span> <i data-lucide="trending-up" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="backtest.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Backtest</span> <i data-lucide="history" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="langganan.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Langganan</span> <i data-lucide="credit-card" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="pengaturan.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Pengaturan</span> <i data-lucide="settings" class="w-4 h-4 text-gray-400"></i></a>
+            
+            <div class="h-px bg-gray-100 my-4 flex-shrink-0"></div>
+            <button onclick="logout()" class="flex items-center justify-center w-full py-4 px-3 text-white bg-rose-600 font-bold hover:bg-rose-700 rounded-none transition-colors text-sm shadow-md mb-4 flex-shrink-0"><i data-lucide="log-out" class="w-4 h-4 mr-2"></i> Logout</button>
+        </nav>
+    </div>
+
+    <!-- ▼▼▼ SIDEBAR DESKTOP (KIRI) ▼▼▼ -->
+    <aside id="desktop-sidebar" class="fixed left-0 top-24 bottom-0 w-64 bg-white border-r border-slate-200 z-40 hidden md:flex flex-col py-6 group">
+        <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
+            <div class="flex items-center justify-between px-2 mb-4">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest sidebar-text">Menu Navigasi</p>
+                <button onclick="toggleSidebarCollapse()" id="toggle-sidebar-btn" class="p-1 rounded-none text-slate-400 hover:text-[#14213d] hover:bg-slate-100 transition-colors">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <a href="index.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="home" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Home</span>
+            </a>
+            <a href="login.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="log-in" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Login</span>
+            </a>
+            <a href="beranda.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Beranda Trader</span>
+            </a>
+            <a href="berandaanalis.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="activity" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Beranda Analis</span>
+            </a>
+            <a href="edukasi.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="graduation-cap" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Education for Student</span>
+            </a>
+            
+            <!-- MENU AKTIF SIDEBAR: TOP ANALIS & TRADER -->
+            <a href="topanalisdantrader.html" class="flex items-center px-4 py-3 text-sm font-medium rounded-none bg-[#14213d] text-white shadow-md shadow-slate-200 transition-all duration-300">
+                <i data-lucide="award" class="w-5 h-5 text-white flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Top Analis Dan Trader</span>
+            </a>
+            
+            <a href="investasi.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300 mt-2">
+                <i data-lucide="trending-up" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Investasi</span>
+            </a>
+            <a href="backtest.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="history" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Backtest</span>
+            </a>
+            <a href="langganan.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300 mt-2">
+                <i data-lucide="credit-card" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Langganan</span>
+            </a>
+            <a href="pengaturan.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="settings" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Pengaturan</span>
+            </a>
+        </nav>
+        
+        <div class="px-4 pb-4 mt-auto">
+            <div class="h-px bg-slate-100 w-full mb-4"></div>
+            <button onclick="logout()" class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-none text-rose-600 hover:bg-rose-50 transition-all duration-300 mb-4">
+                <i data-lucide="log-out" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i><span class="sidebar-text">Logout</span>
+            </button>
+            <p class="text-xs text-slate-400 font-medium text-center w-full sidebar-text">© 2026 LEODRA</p>
+        </div>
+    </aside>
+
+    <!-- ▼▼▼ WRAPPER UNTUK KONTEN UTAMA ▼▼▼ -->
+    <div id="main-wrapper" class="md:ml-64 w-full md:w-[calc(100%-16rem)] flex-grow flex flex-col transition-all duration-300 relative">
+        <main class="flex-grow max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 w-full mb-10">
+            
+            <!-- SECTION PENCARIAN & TRENDING (HITS) -->
+            <div class="mb-14">
+                
+                <!-- Kolom Pencarian -->
+                <div class="max-w-3xl mx-auto mb-10">
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
+                        </div>
+                        <input type="text" class="block w-full pl-11 pr-24 py-4 bg-white border border-slate-200 rounded-none text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all" placeholder="Cari analis, trader, atau strategi (misal: Gold Scalping, Breakout)...">
+                        <div class="absolute inset-y-0 right-2 flex items-center">
+                            <button class="bg-[#0f172a] hover:bg-black text-white text-xs font-bold px-5 py-2.5 rounded-none shadow-sm transition-colors">Cari</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Blok Horizontal Analis & Trader Hits -->
+                <div class="mb-6 w-full overflow-hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="flame" class="w-5 h-5 text-rose-500 fill-rose-100"></i>
+                            <h2 class="text-lg md:text-xl font-bold text-slate-800">Sedang Hits Minggu Ini</h2>
+                        </div>
+                    </div>
+                    
+                    <!-- Container Horizontal Scroll -->
+                    <div class="flex overflow-x-auto gap-4 pb-4 snap-x scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300">
+                        
+                        <!-- Card Hits 1 -->
+                        <div class="snap-start shrink-0 w-64 bg-white border border-slate-200 rounded-none p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="relative w-10 h-10 rounded-none bg-[#0f172a] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                                    AW
+                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-rose-500 rounded-none border-2 border-white flex items-center justify-center"><i data-lucide="trending-up" class="w-2 h-2 text-white"></i></div>
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="font-bold text-slate-800 text-sm group-hover:text-blue-600 transition-colors truncate">Dr. Alexander Wong</h3>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold truncate">Top Analis Makro</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-500 font-medium">Win Rate</span>
+                                <span class="font-bold text-emerald-600 font-mono text-sm">92.4%</span>
+                            </div>
+                        </div>
+
+                        <!-- Card Hits 2 -->
+                        <div class="snap-start shrink-0 w-64 bg-white border border-slate-200 rounded-none p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="relative w-10 h-10 rounded-none bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-sm shrink-0">
+                                    QB
+                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-rose-500 rounded-none border-2 border-white flex items-center justify-center"><i data-lucide="trending-up" class="w-2 h-2 text-white"></i></div>
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="font-bold text-slate-800 text-sm group-hover:text-blue-600 transition-colors truncate">QuantumBot v4</h3>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold truncate">Master Trader (HFT)</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-500 font-medium">ROI / Thn</span>
+                                <span class="font-bold text-emerald-600 font-mono text-sm">+450%</span>
+                            </div>
+                        </div>
+
+                        <!-- Card Hits 3 -->
+                        <div class="snap-start shrink-0 w-64 bg-white border border-slate-200 rounded-none p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="relative w-10 h-10 rounded-none bg-[#0f172a] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                                    SL
+                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-rose-500 rounded-none border-2 border-white flex items-center justify-center"><i data-lucide="trending-up" class="w-2 h-2 text-white"></i></div>
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="font-bold text-slate-800 text-sm group-hover:text-blue-600 transition-colors truncate">Sarah 'Sniper' Lin</h3>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold truncate">Analis XAU/USD</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-500 font-medium">Win Rate</span>
+                                <span class="font-bold text-emerald-600 font-mono text-sm">89.1%</span>
+                            </div>
+                        </div>
+
+                        <!-- Card Hits 4 -->
+                        <div class="snap-start shrink-0 w-64 bg-white border border-slate-200 rounded-none p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="relative w-10 h-10 rounded-none bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-sm shrink-0">
+                                    MR
+                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-rose-500 rounded-none border-2 border-white flex items-center justify-center"><i data-lucide="trending-up" class="w-2 h-2 text-white"></i></div>
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="font-bold text-slate-800 text-sm group-hover:text-blue-600 transition-colors truncate">M. Rizky</h3>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold truncate">Master Trader (Intraday)</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-500 font-medium">ROI / Thn</span>
+                                <span class="font-bold text-emerald-600 font-mono text-sm">+312%</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Card Hits 5 -->
+                        <div class="snap-start shrink-0 w-64 bg-white border border-slate-200 rounded-none p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="relative w-10 h-10 rounded-none bg-[#0f172a] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                                    BS
+                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-rose-500 rounded-none border-2 border-white flex items-center justify-center"><i data-lucide="trending-up" class="w-2 h-2 text-white"></i></div>
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="font-bold text-slate-800 text-sm group-hover:text-blue-600 transition-colors truncate">Bima Santoso</h3>
+                                    <p class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold truncate">Analis S&P 500</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-500 font-medium">Win Rate</span>
+                                <span class="font-bold text-emerald-600 font-mono text-sm">87.5%</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kontainer Grid Utama: Kiri (Analis), Kanan (Trader) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 mb-20">
+                
+                <!-- KOLOM KIRI: TOP 10 ANALIS -->
+                <div>
+                    <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-200">
+                        <div>
+                            <h2 class="text-2xl font-bold text-[#0f172a] flex items-center gap-3">
+                                <i data-lucide="bar-chart-2" class="w-6 h-6 text-blue-600"></i>
+                                Top 10 Analis
+                            </h2>
+                            <p class="text-sm text-slate-500 mt-1">Penyedia Sinyal & Analisa Teknis</p>
+                        </div>
+                    </div>
+
+                    <!-- Tempat kartu channel (block) di-generate via JavaScript -->
+                    <div class="space-y-3" id="analis-container"></div>
+                </div>
+
+                <!-- KOLOM KANAN: TOP 10 TRADER -->
+                <div>
+                    <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-200">
+                        <div>
+                            <h2 class="text-2xl font-bold text-[#0f172a] flex items-center gap-3">
+                                <i data-lucide="trending-up" class="w-6 h-6 text-emerald-600"></i>
+                                Top 10 Trader
+                            </h2>
+                            <p class="text-sm text-slate-500 mt-1">Penyedia Master Copytrading</p>
+                        </div>
+                    </div>
+
+                    <!-- Tempat kartu channel (block) di-generate via JavaScript -->
+                    <div class="space-y-3" id="trader-container"></div>
+                </div>
+
+            </div>
+
+            <!-- SECTION BARU: MEKANISME KERJA -->
+            <div class="mt-24 border-t border-slate-200 pt-16">
+                <div class="text-center mb-16">
+                    <h2 class="text-2xl md:text-3xl font-serif font-bold text-[#0f172a] mb-4">Mekanisme Transparan & Berkeadilan</h2>
+                    <p class="text-slate-600 max-w-2xl mx-auto text-base">Kami merancang ekosistem investasi yang memprioritaskan keamanan dana Anda dan memberikan kompensasi kepada Master hanya ketika mereka memberikan hasil nyata.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20 max-w-6xl mx-auto px-4">
+                    
+                    <!-- Penjelasan Langganan Sinyal -->
+                    <div>
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-none flex items-center justify-center shrink-0">
+                                <i data-lucide="bell-ring" class="w-6 h-6"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-[#0f172a]">Sistem Langganan Analis (Sinyal)</h3>
+                        </div>
+                        <p class="text-slate-600 text-sm leading-relaxed mb-8">
+                            Cocok bagi Anda yang ingin belajar sambil praktik. Anda memegang kontrol penuh atas akun, lot, dan eksekusi Anda sendiri berdasarkan notifikasi dari Analis.
+                        </p>
+                        <div class="space-y-6">
+                            <div class="flex items-start gap-4">
+                                <i data-lucide="credit-card" class="w-5 h-5 text-slate-400 shrink-0 mt-0.5"></i>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">Biaya Tetap (Flat Fee)</h4>
+                                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">Anda hanya membayar biaya bulanan yang tetap. 100% profit yang dihasilkan di market adalah milik Anda.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <i data-lucide="smartphone" class="w-5 h-5 text-slate-400 shrink-0 mt-0.5"></i>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">Notifikasi Real-Time</h4>
+                                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">Terima notifikasi instan untuk setiap Entry, Stop Loss, dan Take Profit langsung melalui dashboard LEODRA.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <i data-lucide="shield" class="w-5 h-5 text-slate-400 shrink-0 mt-0.5"></i>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">Kontrol Risiko Mandiri</h4>
+                                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">Analis hanya memberikan parameter. Anda bebas mengatur ukuran lot sesuai kapasitas margin (modal) Anda.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Penjelasan Copytrade -->
+                    <div>
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-none flex items-center justify-center shrink-0">
+                                <i data-lucide="copy" class="w-6 h-6"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-[#0f172a]">Sistem Copy Trading (Otomatis)</h3>
+                        </div>
+                        <p class="text-slate-600 text-sm leading-relaxed mb-8">
+                            Solusi investasi pasif. Sistem akan secara otomatis menduplikasi (mirror) setiap open posisi dari Top Trader ke akun Anda secara instan.
+                        </p>
+                        <div class="space-y-6">
+                            <div class="flex items-start gap-4">
+                                <i data-lucide="scale" class="w-5 h-5 text-slate-400 shrink-0 mt-0.5"></i>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">Alokasi Lot Proporsional</h4>
+                                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">Sistem kami secara cerdas menyesuaikan ukuran lot Master Trader dengan jumlah saldo Anda. Sangat aman dan terukur.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <i data-lucide="pie-chart" class="w-5 h-5 text-slate-400 shrink-0 mt-0.5"></i>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm">Profit Sharing Terbuka</h4>
+                                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">Master Trader akan mendapatkan persentase bagian (Fee) yang disepakati dari keuntungan yang dihasilkan secara otomatis.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <i data-lucide="trending-up" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i>
+                                <div>
+                                    <h4 class="font-bold text-emerald-600 text-sm">Standar High-Water Mark</h4>
+                                    <p class="text-xs text-slate-500 mt-1 leading-relaxed">Keadilan untuk investor: Master hanya menerima Profit Sharing jika portfolio Anda mencapai level puncak (keuntungan) baru.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+
+        <!-- ▼▼▼ FOOTER PROFESIONAL ▼▼▼ -->
+        <footer class="bg-[#0b1120] text-slate-400 mt-auto w-full border-t border-slate-800 relative z-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-8 md:gap-10 mb-10">
+                    <div class="col-span-1 sm:col-span-2 md:col-span-6 lg:col-span-5 text-center sm:text-left">
+                        <span class="font-light text-xl md:text-2xl tracking-widest text-white font-merriweather block mb-3 md:mb-4">LEODRA</span>
+                        <p class="text-xs leading-relaxed text-justify sm:text-left">
+                            Platform manajemen risiko dan analitik trading profesional. <br class="hidden lg:block mb-2">
+                            <strong class="text-slate-200">Keunggulan Eksklusif:</strong> Integrasi otomatis Backtest berbasis Excel (TF), presisi kustomisasi Take Profit/Risk Ratio dinamis, serta analitik probabilitas performa mendalam.
+                        </p>
+                    </div>
+
+                    <div class="col-span-1 md:col-span-4 lg:col-span-5 flex flex-col items-center sm:items-start md:pl-8 lg:pl-16 w-full">
+                        <h4 class="text-[10px] font-bold tracking-widest uppercase text-slate-500 mb-4 border-b border-slate-800 pb-2 w-full max-w-[200px] text-center sm:text-left">Menu Navigasi</h4>
+                        <div class="grid grid-cols-2 gap-x-4 md:gap-x-8 gap-y-3 text-[11px] font-bold tracking-wider uppercase text-slate-400 w-full max-w-[280px]">
+                            <a href="index.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Home</a>
+                            <a href="login.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Login</a>
+                            <a href="beranda.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Beranda Trader</a>
+                            <a href="berandaanalis.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Beranda Analis</a>
+                            <a href="edukasi.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Edukasi</a>
+                            
+                            <!-- MENU AKTIF FOOTER: Top Analis/Trader -->
+                            <a href="topanalisdantrader.html" class="text-white flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-white"></i> <span class="border-b border-white pb-0.5">Top Analis Dan Trader</span></a>
+                            
+                            <a href="investasi.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Investasi</a>
+                            <a href="backtest.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Backtest</a>
+                            <a href="langganan.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Langganan</a>
+                            <a href="pengaturan.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Pengaturan</a>
+                        </div>
+                    </div>
+
+                    <div class="col-span-1 md:col-span-2 lg:col-span-2 flex flex-col items-center sm:items-start md:items-end w-full">
+                        <h4 class="text-[10px] font-bold tracking-widest uppercase text-slate-500 mb-4 border-b border-slate-800 pb-2 w-full max-w-[150px] md:max-w-[120px] text-center sm:text-left md:text-right">Terhubung</h4>
+                        <div class="flex flex-row md:flex-col items-center sm:items-start md:items-end gap-4 md:gap-3">
+                            <a href="#" class="flex items-center gap-2 hover:text-white transition-colors group">
+                                <span class="text-[11px] font-bold tracking-wider uppercase hidden md:block">Instagram</span>
+                                <i data-lucide="instagram" class="w-5 h-5 md:w-4 md:h-4 group-hover:scale-110"></i>
+                            </a>
+                            <a href="https://wa.me/6281234567890" target="_blank" class="flex items-center gap-2 hover:text-white transition-colors group">
+                                <span class="text-[11px] font-bold tracking-wider uppercase hidden md:block">Support WA</span>
+                                <i data-lucide="message-circle" class="w-5 h-5 md:w-4 md:h-4 group-hover:scale-110"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-800 pt-6 flex flex-col lg:flex-row justify-between items-center gap-4 md:gap-6 text-[10px] text-slate-500 text-center lg:text-left">
+                    <div class="max-w-4xl leading-relaxed">
+                        <strong class="text-slate-400">Peringatan Risiko:</strong> Trading pada instrumen keuangan membawa tingkat risiko tinggi. LEODRA adalah platform analitik dan penyedia layanan copytrade mandiri, bukan manajer investasi.
+                    </div>
+                    <div class="flex flex-col items-center lg:items-end gap-2 flex-shrink-0">
+                        <p>&copy; 2026 LEODRA Analytics. Hak Cipta Dilindungi.</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- LOGIKA JAVASCRIPT & JS HEADER/USER DATA BARU -->
+    <script>
+        // Data Mock Top 10 Analis (Corporate Theme)
+        const analisData = [
+            { name: "Dr. Alexander Wong", spec: "Makro Ekonomi & Gold", winrate: "92.4%", subs: "12,450", price: "Rp 250rb" },
+            { name: "Sarah 'Sniper' Lin", spec: "XAU/USD Scalping", winrate: "89.1%", subs: "9,800", price: "Rp 150rb" },
+            { name: "Bima Santoso", spec: "S&P 500 & Indices", winrate: "87.5%", subs: "8,100", price: "Rp 200rb" },
+            { name: "Crypto Whale Alpha", spec: "Bitcoin & Altcoins", winrate: "85.0%", subs: "7,500", price: "Rp 150rb" },
+            { name: "Elena Rostova", spec: "EUR/USD Swing", winrate: "83.2%", subs: "6,200", price: "Rp 100rb" },
+            { name: "Kenji Takahashi", spec: "JPY Pairs Specialist", winrate: "81.8%", subs: "5,900", price: "Rp 100rb" },
+            { name: "FX Dominator", spec: "Price Action Pure", winrate: "79.5%", subs: "5,100", price: "Rp 150rb" },
+            { name: "Dewi Kartika", spec: "Commodities (Oil)", winrate: "78.0%", subs: "4,800", price: "Rp 100rb" },
+            { name: "Alpha Forex Team", spec: "Algorithmic Signals", winrate: "76.4%", subs: "4,200", price: "Rp 250rb" },
+            { name: "Global Macro Pro", spec: "Fundamental Bias", winrate: "75.1%", subs: "3,900", price: "Rp 150rb" }
+        ];
+
+        // Data Mock Top 10 Trader (Corporate Theme)
+        const traderData = [
+            { name: "QuantumBot v4", strategy: "HFT Algorithm", roi: "+450%", copiers: "25,000", fee: "20%" },
+            { name: "M. Rizky", strategy: "Intraday Momentum", roi: "+312%", copiers: "18,200", fee: "15%" },
+            { name: "Steady Growth Fund", strategy: "Low Risk Swing", roi: "+185%", copiers: "15,400", fee: "10%" },
+            { name: "Nadia Trading", strategy: "Gold Reversal", roi: "+160%", copiers: "12,100", fee: "25%" },
+            { name: "Apex Capital", strategy: "Diversified Portfolio", roi: "+145%", copiers: "10,800", fee: "15%" },
+            { name: "Vanguard FX", strategy: "Breakout Strategy", roi: "+120%", copiers: "9,500", fee: "20%" },
+            { name: "David 'Pips' Chen", strategy: "News Trading", roi: "+105%", copiers: "8,200", fee: "30%" },
+            { name: "Smart Money ID", strategy: "Supply & Demand", roi: "+95%", copiers: "7,800", fee: "15%" },
+            { name: "SafeHaven Trader", strategy: "Hedging Expert", roi: "+82%", copiers: "6,900", fee: "10%" },
+            { name: "NightOwl Scalper", strategy: "Asian Session Scalp", roi: "+70%", copiers: "5,500", fee: "20%" }
+        ];
+
+        // Corporate Number Styling
+        function getRankColorText(index) {
+            if (index === 0) return 'rank-text-1 font-black'; // Gold
+            if (index === 1) return 'rank-text-2 font-black'; // Silver
+            if (index === 2) return 'rank-text-3 font-black'; // Bronze
+            return 'rank-text-other font-bold'; // Gray
+        }
+
+        function getAvatarClass(index) {
+            if (index < 3) return 'avatar-corporate-top';
+            return 'avatar-corporate-reg';
+        }
+
+        function getInitials(name) {
+            return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+        }
+
+        function renderList(containerId, data, isAnalis) {
+            const container = document.getElementById(containerId);
+            let html = '';
+            
+            data.forEach((item, index) => {
+                const rankTextClass = getRankColorText(index);
+                const avatarClass = getAvatarClass(index);
+                
+                // Gantikan ikon trofi/mahkota dengan lencana check biru dan penanda nama text
+                let topBadgeHtml = '';
+                if (index < 3) {
+                    const badgeTitle = isAnalis ? `Top ${index + 1} Analyst` : `Top ${index + 1} Trader`;
+                    topBadgeHtml = `
+                        <div class="flex items-center gap-1.5 ml-2 mt-0.5">
+                            <i data-lucide="badge-check" class="w-4 h-4 text-blue-500 flex-shrink-0 fill-blue-50"></i>
+                            <span class="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] px-1.5 py-0.5 rounded-none font-bold uppercase tracking-wider hidden sm:inline-block">${badgeTitle}</span>
+                        </div>
+                    `;
+                }
+                
+                const statLabel = isAnalis ? "Win Rate" : "ROI / Thn";
+                const statValue = isAnalis ? item.winrate : item.roi;
+                const statColor = isAnalis ? "text-blue-600" : "text-emerald-600";
+                const followers = isAnalis ? `${item.subs} Subs` : `${item.copiers} Copiers`;
+                const ctaText = isAnalis ? "Subscribe" : "Copy Trade";
+                const priceText = isAnalis ? `${item.price}/bln` : `Fee ${item.fee}`;
+                
+                // Logika navigasi khusus untuk Top 1 Analis
+                const onClickAttr = (isAnalis && index === 0) ? `onclick="window.location.href='top1analis.html'"` : '';
+                const cursorClass = (isAnalis && index === 0) ? 'cursor-pointer hover:border-blue-400 hover:shadow-md' : '';
+
+                html += `
+                    <div ${onClickAttr} class="leaderboard-card bg-white border border-slate-200 p-4 rounded-none flex items-center gap-4 relative ${cursorClass}">
+                        
+                        <!-- Peringkat (Clean Text Rank) -->
+                        <div class="w-8 flex justify-center font-serif ${rankTextClass}">
+                            ${index + 1}
+                        </div>
+                        
+                        <!-- Avatar (Tanpa Ikon Absolute) -->
+                        <div class="relative flex-shrink-0 w-12 h-12 rounded-none flex items-center justify-center font-bold text-sm ${avatarClass}">
+                            ${getInitials(item.name)}
+                        </div>
+                        
+                        <!-- Info Detail -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center">
+                                <h3 class="font-bold text-slate-800 text-base truncate">${item.name}</h3>
+                                ${topBadgeHtml}
+                            </div>
+                            <p class="text-xs text-slate-500 mb-1.5 truncate mt-0.5">${isAnalis ? item.spec : item.strategy}</p>
+                            <div class="flex items-center gap-3 text-[10px] font-semibold text-slate-400">
+                                <span class="flex items-center gap-1"><i data-lucide="users" class="w-3 h-3 text-slate-400"></i> ${followers}</span>
+                            </div>
+                        </div>
+
+                        <!-- Stats & CTA -->
+                        <div class="flex flex-col items-end gap-2">
+                            <div class="text-right">
+                                <span class="text-[9px] text-slate-400 uppercase tracking-widest block mb-0.5">${statLabel}</span>
+                                <span class="font-bold font-mono ${statColor} text-lg leading-none">${statValue}</span>
+                            </div>
+                            <button class="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-none text-[10px] font-bold tracking-wider uppercase flex flex-col items-center justify-center transition-colors min-w-[90px]">
+                                <span>${ctaText}</span>
+                                <span class="text-[8px] text-slate-500 font-medium mt-0.5">${priceText}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Init Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            renderList('analis-container', analisData, true);
+            renderList('trader-container', traderData, false);
+
+            // Init Icons Lucide
+            if(window.lucide) window.lucide.createIcons();
+            
+            // Panggil Header Time dan Setup Sinkronisasi User Data (Terpusat)
+            updateHeaderTime();
+            setInterval(updateHeaderTime, 1000);
+            loadUserData();
+        });
+
+        // ---------------- JS HEADER & SIDEBAR LOGIC (DIPERBARUI 100%) ----------------
+        
+        // Waktu & Tanggal
+        function updateHeaderTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).replace(/\./g, ':');
+            const dateStr = now.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+            const elClock = document.getElementById("headerRealTimeClock"); if (elClock) elClock.textContent = timeStr;
+            const elDate = document.getElementById("headerRealTimeDate"); if (elDate) elDate.textContent = dateStr;
+        }
+
+        // Toggle Mobile Menu
+        window.toggleMenu = function() {
+            const m = document.getElementById('mobile-menu');
+            const iconMenu = document.getElementById('icon-menu');
+            const iconClose = document.getElementById('icon-close');
+            
+            if(m) { 
+                m.classList.toggle('translate-x-full'); 
+                const isOpen = !m.classList.contains('translate-x-full');
+                
+                // Atur agar body tidak bisa di-scroll saat menu terbuka
+                document.body.style.overflow = isOpen ? 'hidden' : 'auto'; 
+                
+                // Logika Animasi Tombol Hamburger to Cross
+                if(isOpen) {
+                    if(iconMenu) { iconMenu.classList.remove('scale-100', 'rotate-0', 'opacity-100'); iconMenu.classList.add('scale-0', 'rotate-90', 'opacity-0'); }
+                    if(iconClose) { iconClose.classList.remove('scale-0', '-rotate-90', 'opacity-0'); iconClose.classList.add('scale-100', 'rotate-0', 'opacity-100'); }
+                } else {
+                    if(iconClose) { iconClose.classList.remove('scale-100', 'rotate-0', 'opacity-100'); iconClose.classList.add('scale-0', '-rotate-90', 'opacity-0'); }
+                    if(iconMenu) { iconMenu.classList.remove('scale-0', 'rotate-90', 'opacity-0'); iconMenu.classList.add('scale-100', 'rotate-0', 'opacity-100'); }
+                }
+            }
+        }
+
+        // Toggle Desktop Sidebar
+        window.toggleSidebarCollapse = function() {
+            const sidebar = document.getElementById('desktop-sidebar');
+            const wrapper = document.getElementById('main-wrapper');
+            sidebar.classList.toggle('is-collapsed');
+            
+            if (sidebar.classList.contains('is-collapsed')) {
+                wrapper.classList.remove('md:ml-64', 'md:w-[calc(100%-16rem)]'); wrapper.classList.add('md:ml-[5.5rem]', 'md:w-[calc(100%-5.5rem)]');
+            } else {
+                wrapper.classList.add('md:ml-64', 'md:w-[calc(100%-16rem)]'); wrapper.classList.remove('md:ml-[5.5rem]', 'md:w-[calc(100%-5.5rem)]');
+            }
+        }
+
+        // Load Data Akun (Diperbarui untuk sinkronisasi Google Login & Profile Picture)
+        function loadUserData() {
+            const userStr = localStorage.getItem("user");
+            const mobileAvatar = document.getElementById('mobile-user-avatar');
+            const desktopAvatar = document.getElementById('desktop-user-avatar');
+            const desktopUser = document.getElementById('desktop-user-info');
+            const mobileUserName = document.getElementById('mobile-user-name');
+            const mobileUserEmail = document.getElementById('mobile-user-email');
+            const mobileTime = document.getElementById('mobile-user-time');
+            
+            if(userStr) {
+                try {
+                    const u = JSON.parse(userStr); 
+                    const name = u.name || u.email || "User"; 
+                    const email = u.email || "";
+                    let regTime = u.timestamp || "Aktif";
+                    
+                    // Set Desktop Info (Nama dengan font eksklusif Merriweather)
+                    if(desktopUser) desktopUser.innerHTML = name;
+                    
+                    // Set Mobile Info (Nama & Email dengan font eksklusif Merriweather)
+                    if(mobileUserName) mobileUserName.textContent = name;
+                    if(mobileUserEmail) mobileUserEmail.textContent = email;
+                    if(mobileTime) mobileTime.textContent = regTime;
+                    
+                    // Setel Foto Profil Lingkaran (Prioritas dari Google: u.picture)
+                    const avatarUrl = u.picture || u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0f172a&color=fff&bold=true`;
+                    if(mobileAvatar) mobileAvatar.src = avatarUrl;
+                    if(desktopAvatar) desktopAvatar.src = avatarUrl;
+                    
+                } catch(e){}
+            } else {
+                if(desktopUser) { desktopUser.textContent = "Mode Tamu"; desktopUser.className = "text-sm font-light tracking-wide text-gray-900 leading-tight font-merriweather"; }
+                if(mobileUserName) mobileUserName.textContent = "Guest";
+                if(mobileUserEmail) mobileUserEmail.textContent = "Belum login";
+                if(mobileAvatar) mobileAvatar.src = `https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff&bold=true`;
+                if(desktopAvatar) desktopAvatar.src = `https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff&bold=true`;
+            }
+        }
+
+        window.logout = function() {
+            if(confirm("Keluar dari sesi ini?")) { 
+                localStorage.removeItem("user"); 
+                localStorage.removeItem("token"); 
+                window.location.href='login.html'; 
+            }
+        }
+    </script>
+</body>
+</html>

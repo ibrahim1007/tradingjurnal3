@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistem Backtest Pips - LEODRA</title>
+    
+    <!-- FIX: Script Anti-Error ResizeObserver -->
+    <script>
+      const _originalError = console.error;
+      console.error = (...args) => {
+        if (/ResizeObserver loop/.test(args[0])) return;
+        _originalError.apply(console, args);
+      };
+      window.addEventListener('error', e => {
+        if (e.message === 'ResizeObserver loop limit exceeded') {
+          e.stopImmediatePropagation();
+        }
+      });
+    </script>
+
+    <!-- Memuat Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Merriweather:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        /* Gaya Global & Font Khusus Header */
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f8fafc; 
+            color: #334155; 
+            margin: 0;
+            padding: 0;
+        }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 0; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .input-modern { background-color: #f1f5f9; border: 1px solid transparent; transition: all 0.3s ease; }
+        .input-modern:focus { background-color: #ffffff; border-color: #e2e8f0; box-shadow: 0 0 0 4px rgba(226, 232, 240, 0.5); outline: none; }
+        
+        .card-clean { background-color: #ffffff; border: 1px solid #f1f5f9; border-radius: 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); }
+        
+        .stat-box { background-color: #f8fafc; border-radius: 0; padding: 1rem; border: 1px solid #f1f5f9; transition: transform 0.2s; }
+        .stat-box:hover { border-color: #e2e8f0; }
+        
+        .text-xxs { font-size: 0.65rem; }
+        
+        .monthly-table { font-size: 0.65rem; width: 100%; min-width: 600px; }
+        .monthly-table th, .monthly-table td { 
+            padding: 0.5rem 0.5rem; 
+            text-align: center; 
+            border-bottom: 1px solid #f1f5f9; 
+            white-space: nowrap; 
+        }
+        .monthly-table th { font-weight: 700; letter-spacing: 0.05em; font-size: 0.6rem; }
+        .monthly-table th:first-child, .monthly-table td:first-child { 
+            text-align: left; 
+            position: sticky; 
+            left: 0; 
+            background-color: white; 
+            z-index: 10; 
+            border-right: 2px solid #f1f5f9; 
+        }
+
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .font-merriweather { font-family: 'Merriweather', serif; }
+
+        @media screen and (min-width: 1280px) { body { zoom: 0.8; } }
+        main { margin-top: 6rem !important; }
+        @media screen and (min-width: 768px) { main { margin-top: 7rem !important; } }
+        
+        #desktop-sidebar { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); overflow-x: hidden; white-space: nowrap; }
+        #desktop-sidebar.is-collapsed { width: 5.5rem; }
+        #desktop-sidebar.is-collapsed:hover { width: 16rem; box-shadow: 4px 0 24px rgba(0,0,0,0.08); }
+        #desktop-sidebar.is-collapsed:not(:hover) a.flex, #desktop-sidebar.is-collapsed:not(:hover) button.flex { padding-left: 0 !important; padding-right: 0 !important; justify-content: center !important; }
+        .sidebar-text { transition: opacity 0.2s, max-width 0.3s; max-width: 200px; overflow: hidden; display: inline-block; vertical-align: middle; }
+        #desktop-sidebar.is-collapsed:not(:hover) .sidebar-text { opacity: 0; max-width: 0; }
+        #desktop-sidebar.is-collapsed:not(:hover) .sidebar-icon-margin { margin-right: 0; }
+        .sidebar-icon-margin { transition: margin-right 0.3s; margin-right: 0.75rem; }
+        #toggle-sidebar-btn { transition: transform 0.3s; }
+        #desktop-sidebar.is-collapsed:not(:hover) #toggle-sidebar-btn { transform: rotate(180deg); }
+        #main-wrapper { transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* Modal Animation */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 200ms ease-out, transform 200ms ease-out; }
+        .modal-exit { opacity: 1; transform: scale(1); }
+        .modal-exit-active { opacity: 0; transform: scale(0.95); transition: opacity 200ms ease-in, transform 200ms ease-in; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col overflow-x-hidden bg-[#14213d]">
+
+    <!-- ▼▼▼ HEADER UTAMA LEODRA ▼▼▼ -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-gray-200 fixed top-0 w-full z-50 transition-all duration-300 h-20 md:h-24">
+        <div class="w-full h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
+            
+            <div class="flex items-center flex-shrink-0 cursor-pointer" onclick="window.location.href='index.html'">
+                <span class="font-light text-xl md:text-2xl tracking-widest text-black font-merriweather">LEODRA</span>
+            </div>
+
+            <div class="flex-1 flex flex-col justify-center items-center px-1 overflow-hidden">
+                <span id="headerRealTimeClock" class="text-red-600 font-medium text-[11px] sm:text-[12px] md:text-sm tracking-wide leading-none whitespace-nowrap mb-0.5" style="font-family: 'Inter', sans-serif;">
+                    --:--:--
+                </span>
+                <span id="headerRealTimeDate" class="text-black font-light text-[9px] sm:text-[10px] md:text-xs tracking-wide leading-none whitespace-nowrap truncate max-w-full" style="font-family: 'Inter', sans-serif;">
+                    -- -- ----
+                </span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 md:gap-4 flex-shrink-0 min-w-[60px]">
+                <div class="hidden md:flex items-center gap-4">
+                    <div class="text-right">
+                        <!-- Teks Nama Di Desktop (Font Merriweather Eksklusif) -->
+                        <p id="desktop-user-info" class="text-sm font-light tracking-wide text-gray-900 leading-tight font-merriweather">Loading...</p>
+                        <div class="flex items-center justify-end gap-1.5 mt-1">
+                            <div class="w-1.5 h-1.5 rounded-none bg-green-500 animate-pulse"></div>
+                            <span class="text-[10px] text-green-600 font-bold tracking-wider uppercase">Online</span>
+                        </div>
+                    </div>
+                    <!-- Foto Profil Desktop -->
+                    <img id="desktop-user-avatar" src="https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff" alt="Profil User" class="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm flex-shrink-0">
+                </div>
+                
+                <!-- TOMBOL HAMBURGER & CLOSE (DIJADIKAN SATU DENGAN ANIMASI) -->
+                <button onclick="toggleMenu()" id="mobile-menu-btn" class="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-none transition-colors relative w-10 h-10 flex items-center justify-center overflow-hidden" aria-label="Toggle Menu">
+                    <span id="icon-menu" class="absolute transition-all duration-300 transform scale-100 rotate-0 opacity-100 flex items-center justify-center w-full h-full">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </span>
+                    <span id="icon-close" class="absolute transition-all duration-300 transform scale-0 -rotate-90 opacity-0 flex items-center justify-center w-full h-full text-rose-600">
+                        <i data-lucide="x" class="w-7 h-7"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ▼▼▼ MENU MOBILE (OVERLAY) ▼▼▼ -->
+    <div id="mobile-menu" class="fixed inset-0 bg-white z-[40] transform translate-x-full transition-transform duration-300 md:hidden flex flex-col pt-20">
+        
+        <!-- Bagian Info Akun (Fixed di atas, Warna Hitam Khusus, Sudut Tajam) -->
+        <div class="flex-shrink-0 px-4 pt-4 pb-2 bg-white border-b border-gray-100 z-10 shadow-sm relative">
+            <div class="bg-[#0a0a0a] p-5 rounded-none border border-gray-800 shadow-xl">
+                <div class="flex items-center gap-4 mb-4">
+                    <!-- FOTO PROFIL (Lingkaran) -->
+                    <img id="mobile-user-avatar" src="https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff" alt="Profil User" class="w-12 h-12 rounded-full object-cover border-2 border-gray-600 shadow-md flex-shrink-0">
+                    
+                    <div class="overflow-hidden w-full">
+                        <p class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-1">Identitas Sesi</p>
+                        <!-- Teks Nama & Email Di HP (Font Merriweather Eksklusif) -->
+                        <p id="mobile-user-name" class="text-base font-light tracking-wide text-white truncate font-merriweather mb-0.5">Guest</p>
+                        <p id="mobile-user-email" class="text-xs font-light text-gray-400 truncate font-merriweather">Belum login</p>
+                    </div>
+                </div>
+                <div class="border-t border-gray-800 pt-3 flex justify-between items-center">
+                    <div>
+                        <p class="text-[9px] text-gray-500 font-bold mb-1 uppercase tracking-widest">Status</p>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span class="text-[10px] text-green-500 font-bold uppercase tracking-wider">Online</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[9px] text-gray-500 font-bold mb-1 uppercase tracking-widest">Sesi Aktif</p>
+                        <p id="mobile-user-time" class="text-[10px] sm:text-xs font-mono text-blue-400 font-medium">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bagian Navigasi (Bisa di-scroll vertikal) -->
+        <nav class="flex-1 overflow-y-auto px-4 py-4 pb-10 flex flex-col gap-2 text-sm bg-white">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Menu Utama</p>
+            <a href="index.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Home</span> <i data-lucide="calculator" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="login.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-medium transition-colors"><span>Login</span> <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="beranda.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Beranda Trader</span> <i data-lucide="layout-dashboard" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="berandaanalis.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Beranda Analis</span> <i data-lucide="activity" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="edukasi.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Education for Student</span> <i data-lucide="graduation-cap" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="topanalisdantrader.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Top Analis Dan Trader</span> <i data-lucide="award" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="investasi.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Investasi</span> <i data-lucide="trending-up" class="w-4 h-4 text-gray-400"></i></a>
+            
+            <!-- MENU AKTIF MOBILE : BACKTEST -->
+            <a href="backtest.html" class="flex items-center justify-between p-3.5 rounded-none text-[#14213d] bg-[#14213d]/5 border border-[#14213d]/10 font-bold transition-colors"><span>Backtest</span> <i data-lucide="history" class="w-4 h-4 text-[#14213d]"></i></a>
+            
+            <a href="langganan.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Langganan</span> <i data-lucide="credit-card" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="pengaturan.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Pengaturan</span> <i data-lucide="settings" class="w-4 h-4 text-gray-400"></i></a>
+            
+            <div class="h-px bg-gray-100 my-4 flex-shrink-0"></div>
+            <button onclick="logout()" class="flex items-center justify-center w-full py-4 px-3 text-white bg-rose-600 font-bold hover:bg-rose-700 rounded-none transition-colors text-sm shadow-md mb-4 flex-shrink-0"><i data-lucide="log-out" class="w-4 h-4 mr-2"></i> Logout</button>
+        </nav>
+    </div>
+
+    <!-- ▼▼▼ SIDEBAR DESKTOP (KIRI) ▼▼▼ -->
+    <aside id="desktop-sidebar" class="fixed left-0 top-24 bottom-0 w-64 bg-white border-r border-slate-200 z-40 hidden md:flex flex-col py-6 group">
+        <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
+            <div class="flex items-center justify-between px-2 mb-4">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest sidebar-text">Menu Navigasi</p>
+                <button onclick="toggleSidebarCollapse()" id="toggle-sidebar-btn" class="p-1 rounded-none text-slate-400 hover:text-[#14213d] hover:bg-slate-100 transition-colors">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <a href="index.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="home" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Home</span>
+            </a>
+            <a href="login.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="log-in" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Login</span>
+            </a>
+            <a href="beranda.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Beranda Trader</span>
+            </a>
+            <a href="berandaanalis.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="activity" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Beranda Analis</span>
+            </a>
+            <a href="edukasi.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="graduation-cap" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Education for Student</span>
+            </a>
+            <a href="topanalisdantrader.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="award" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Top Analis Dan Trader</span>
+            </a>
+            <a href="investasi.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="trending-up" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Investasi</span>
+            </a>
+            
+            <!-- MENU AKTIF: BACKTEST -->
+            <a href="backtest.html" class="flex items-center px-4 py-3 text-sm font-medium rounded-none bg-[#14213d] text-white shadow-md shadow-slate-200 transition-all duration-300">
+                <i data-lucide="history" class="w-5 h-5 text-white flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Backtest</span>
+            </a>
+            
+            <a href="langganan.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300 mt-2">
+                <i data-lucide="credit-card" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Langganan</span>
+            </a>
+            <a href="pengaturan.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="settings" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Pengaturan</span>
+            </a>
+        </nav>
+        
+        <div class="px-4 pb-4 mt-auto">
+            <div class="h-px bg-slate-100 w-full mb-4"></div>
+            <button onclick="logout()" class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-none text-rose-600 hover:bg-rose-50 transition-all duration-300 mb-4">
+                <i data-lucide="log-out" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Logout</span>
+            </button>
+            <p class="text-xs text-slate-400 font-medium text-center w-full sidebar-text">© 2026 LEODRA</p>
+        </div>
+    </aside>
+
+    <!-- WRAPPER UNTUK KONTEN UTAMA -->
+    <div id="main-wrapper" class="md:ml-64 w-full md:w-[calc(100%-16rem)] flex-grow flex flex-col transition-all duration-300 relative bg-[#f8fafc]">
+        <main class="flex-grow max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 w-full">
+            <div class="space-y-4">
+                
+                <!-- 1. PARAMETER TRADE (DIPERBARUI TANPA MODAL) -->
+                <section class="card-clean p-4 sm:p-6 md:p-8">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 sm:mb-6 gap-3 sm:gap-4 border-b border-slate-100 pb-4">
+                        <h2 class="text-base sm:text-lg font-bold text-slate-800">1. Parameter Trade & Setup (Pips Base)</h2>
+                        <div id="calculation-status" class="text-xs sm:text-sm font-bold text-blue-600 px-3 sm:px-4 py-2 bg-blue-50 rounded-none w-full md:w-auto text-center">Siap menghitung...</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
+                        <div>
+                            <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">Aset</label>
+                            <select id="pair" class="w-full p-2.5 sm:p-3 rounded-none border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                                <option value="XAUUSD">XAUUSD</option>
+                                <option value="EURUSD">EURUSD</option>
+                                <option value="GBPUSD">GBPUSD</option>
+                                <option value="NASDAQ">NASDAQ</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">Posisi</label>
+                            <select id="order-type" class="w-full p-2.5 sm:p-3 rounded-none border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                                <option value="buy">BUY</option>
+                                <option value="sell">SELL</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">Risk:Reward Target (1:?)</label>
+                            <input type="number" id="custom-rr" value="2" step="0.1" class="w-full p-2.5 sm:p-3 rounded-none border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">Harga Entry</label>
+                            <input type="number" id="entry-price" class="w-full p-2.5 sm:p-3 rounded-none border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">Harga Stop Loss (SL)</label>
+                            <input type="number" id="sl-price" class="w-full p-2.5 sm:p-3 rounded-none border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">Harga Take Profit (TP)</label>
+                            <input type="number" id="tp-price" class="w-full p-2.5 sm:p-3 rounded-none border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                        </div>
+                        <!-- Waktu -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 col-span-1 sm:col-span-2 lg:col-span-3">
+                            <div>
+                                <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">Waktu Open</label>
+                                <input type="datetime-local" id="open-time" class="w-full p-2.5 sm:p-3 rounded-none border border-slate-200 text-xs sm:text-sm outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">Waktu Close</label>
+                                <input type="datetime-local" id="close-time" class="w-full p-2.5 sm:p-3 rounded-none border border-slate-200 text-xs sm:text-sm outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. HASIL KALKULASI PIPS -->
+                    <h3 class="text-xs sm:text-sm font-bold text-slate-800 mb-3 sm:mb-4 uppercase tracking-wider">2. Jarak Pips Validasi</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-6 bg-slate-50 p-3 sm:p-4 rounded-none border border-slate-100">
+                        <div>
+                            <label class="block text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase mb-1">Risiko Pips (SL)</label>
+                            <input type="text" id="result-sl-pips" class="w-full p-2 bg-white rounded-none border border-rose-200 font-bold text-rose-600 text-sm" readonly>
+                        </div>
+                        <div>
+                            <label class="block text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase mb-1">Target Pips (TP)</label>
+                            <input type="text" id="result-tp-pips" class="w-full p-2 bg-white rounded-none border border-emerald-200 font-bold text-emerald-600 text-sm" readonly>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase mb-1">Aktual R:R</label>
+                            <input type="text" id="result-rr-actual" class="w-full p-2 bg-white rounded-none border border-blue-200 font-bold text-blue-600 text-sm" readonly>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Action -->
+                    <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full justify-end">
+                        <button id="btn-reset" class="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-none font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition text-sm">Reset</button>
+                        <button id="btn-save" class="w-full sm:w-auto px-6 py-2.5 sm:py-3 rounded-none font-semibold text-white bg-slate-900 hover:bg-slate-800 transition shadow-lg shadow-slate-200 text-sm disabled:opacity-50" disabled>Simpan Jurnal Pips</button>
+                    </div>
+                </section>
+
+            <!-- 3. RIWAYAT TRADE (PIPS BASE) -->
+            <section class="card-clean flex flex-col h-[450px] sm:h-[550px]">
+                <div class="p-4 sm:p-5 border-b border-slate-50 flex items-center justify-between sticky top-0 bg-white rounded-none z-10">
+                    <h2 class="text-base sm:text-lg font-bold text-slate-800">3. Riwayat Trade Terperinci</h2>
+                    <button id="btn-delete-all" title="Hapus Semua" class="text-[10px] sm:text-xs text-rose-500 hover:bg-rose-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded-none transition font-bold border border-transparent hover:border-rose-100">Hapus Semua</button>
+                </div>
+                <div id="history-list" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 bg-slate-50/50">
+                    <div id="history-empty-state" class="flex flex-col items-center justify-center h-full text-slate-300"><span class="text-xs sm:text-sm font-medium">Belum ada data</span></div>
+                </div>
+            </section>
+
+            <!-- 4. STATISTIK PERFORMA PIPS -->
+            <section class="card-clean p-4 sm:p-6 md:p-8">
+                <h2 class="text-base sm:text-lg font-bold text-slate-800 mb-4 sm:mb-6 border-b border-slate-100 pb-2">4. Statistik Performa Lengkap</h2>
+                
+                <!-- Grid Statistik Responsif (Disesuaikan untuk Pips) -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+                    <div class="stat-box col-span-2 sm:col-span-3 lg:col-span-2 bg-slate-800 border-slate-800 flex justify-between items-center p-3 sm:p-4">
+                        <div><span class="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block">Win Rate</span><span id="stat-winrate" class="text-base sm:text-lg font-bold text-white">0%</span></div>
+                        <div class="text-right"><span class="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-400 block">Total Net Pips</span><span id="stat-final-pips" class="text-lg sm:text-2xl font-bold font-mono text-emerald-400">0</span></div>
+                    </div>
+                    <div class="stat-box col-span-2 sm:col-span-3 lg:col-span-2 bg-rose-50 border-rose-100 flex justify-between items-center p-3 sm:p-4">
+                        <div><span class="text-[9px] sm:text-[10px] uppercase font-bold text-rose-400 block mb-1">Prob. Loss</span><span id="stat-loss-prob" class="text-base sm:text-lg font-bold text-rose-600">0%</span></div>
+                        <div class="text-right"><span class="text-[9px] sm:text-[10px] uppercase font-bold text-rose-400 block mb-1">Total Loss Pips</span><span id="stat-total-loss-pips" class="text-base sm:text-lg font-bold font-mono text-rose-600">0</span></div>
+                    </div>
+                    <div class="stat-box p-3 sm:p-4"><span class="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block mb-1">Avg Profit Pips</span><span id="stat-avg-win-pips" class="text-xs sm:text-sm font-bold font-mono text-emerald-600">0</span></div>
+                    <div class="stat-box p-3 sm:p-4"><span class="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block mb-1">Avg Loss Pips</span><span id="stat-avg-loss-pips" class="text-xs sm:text-sm font-bold font-mono text-rose-600">0</span></div>
+                    <div class="stat-box p-3 sm:p-4"><span class="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block mb-1">Avg RR Actual</span><span id="stat-avg-rr" class="text-xs sm:text-sm font-bold font-mono text-blue-600">1 : -</span></div>
+                    <div class="stat-box p-3 sm:p-4"><span class="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block mb-1">Max DD (Pips)</span><span id="stat-drawdown-pips" class="text-xs sm:text-sm font-bold font-mono text-rose-600">0</span></div>
+                    
+                    <div class="stat-box p-3 sm:p-4"><span class="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block mb-1">Max Profit (Pips)</span><span id="stat-max-pips" class="text-xs sm:text-sm font-bold font-mono text-emerald-600">0</span></div>
+                    <div class="stat-box p-3 sm:p-4"><span class="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block mb-1">Max Loss (Pips)</span><span id="stat-min-pips" class="text-xs sm:text-sm font-bold font-mono text-rose-600">0</span></div>
+                    
+                    <div class="stat-box p-3 sm:p-4">
+                        <span class="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block mb-1 truncate">Consic. Profit</span>
+                        <span id="stat-con-win" class="text-xs sm:text-sm font-bold text-slate-800">0x</span>
+                        <div class="mt-2 border-t border-slate-100 pt-1 flex flex-col sm:block"><span id="stat-con-win-pips" class="text-[11px] sm:text-xs font-bold font-mono text-emerald-600">0 Pips</span></div>
+                    </div>
+                    <div class="stat-box p-3 sm:p-4">
+                        <span class="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 block mb-1 truncate">Consic. Loss</span>
+                        <span id="stat-con-loss" class="text-xs sm:text-sm font-bold text-slate-800">0x</span>
+                        <div class="mt-2 border-t border-slate-100 pt-1 flex flex-col sm:block"><span id="stat-con-loss-pips" class="text-[11px] sm:text-xs font-bold font-mono text-rose-600">0 Pips</span></div>
+                    </div>
+                </div>
+
+                <!-- Tools Footer (Restore & Ekspor) -->
+                <div class="mt-6 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-[11px] sm:text-xs font-bold text-emerald-600 uppercase mb-3">Restore Data</h3>
+                        <div class="space-y-3 sm:space-y-4">
+                            <div class="bg-emerald-50 p-3 sm:p-4 rounded-none border border-emerald-100 relative cursor-pointer hover:bg-emerald-100 transition">
+                                <input type="file" id="import-excel" accept=".xlsx, .xls" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                <div class="flex items-center justify-center gap-2 text-emerald-600">
+                                    <i data-lucide="upload" class="w-4 h-4"></i>
+                                    <span class="font-bold text-xs sm:text-sm">Upload Excel (Standard)</span>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-3 sm:p-4 rounded-none border border-blue-100 relative group cursor-pointer hover:bg-blue-100 transition" onclick="openTfModal()">
+                                <div class="flex items-center justify-center gap-2 text-blue-600">
+                                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                                    <span class="font-bold text-xs sm:text-sm">Upload Excel TF (Backtest)</span>
+                                </div>
+                            </div>
+                            
+                            <div id="tf-controls" class="hidden bg-slate-50 p-3 sm:p-4 rounded-none border border-slate-200">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-2 overflow-hidden">
+                                        <i data-lucide="file-check" class="w-4 h-4 text-emerald-500 flex-shrink-0"></i>
+                                        <span id="tf-filename" class="text-[10px] sm:text-xs font-medium text-slate-600 truncate">filename.csv</span>
+                                    </div>
+                                    <button onclick="openTfModal(true)" class="text-[10px] sm:text-xs text-blue-600 hover:text-blue-800 font-bold underline">Edit</button>
+                                </div>
+                                <button onclick="applyTfData()" class="w-full py-2 sm:py-2.5 rounded-none bg-blue-600 text-white font-bold text-xs sm:text-sm hover:bg-blue-700 shadow-md transition-all flex items-center justify-center gap-2">
+                                    <i data-lucide="play" class="w-3 h-3 fill-current"></i> Terapkan Kalkulasi Pips
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-[11px] sm:text-xs font-bold text-slate-400 uppercase mb-3">Ekspor Data</h3>
+                        <div class="grid grid-cols-2 gap-2 sm:gap-3">
+                            <button id="btn-download-excel" class="px-3 sm:px-4 py-2 sm:py-2.5 rounded-none bg-emerald-50 text-emerald-700 font-semibold text-xs sm:text-sm border border-emerald-100 hover:bg-emerald-100 transition flex items-center justify-center gap-1.5"><i data-lucide="download" class="w-3 h-3 sm:w-4 sm:h-4"></i> Excel</button>
+                            <button id="btn-download-pdf" class="px-3 sm:px-4 py-2 sm:py-2.5 rounded-none bg-rose-50 text-rose-700 font-semibold text-xs sm:text-sm border border-rose-100 hover:bg-rose-100 transition flex items-center justify-center gap-1.5"><i data-lucide="download" class="w-3 h-3 sm:w-4 sm:h-4"></i> PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. GRAFIK PERKEMBANGAN -->
+            <section class="card-clean p-4 sm:p-6 md:p-8 w-full overflow-hidden">
+                <h3 class="text-base sm:text-lg font-bold text-slate-800 mb-2 border-b border-slate-100 pb-2">5. Grafik Perkembangan Ekuitas Pips</h3>
+                <p class="text-[10px] sm:text-xs text-slate-400 mb-4 flex items-center gap-2"><span class="inline-block w-3 h-3 border-l-2 border-slate-400 border-dashed"></span>Garis putus-putus menandakan pergantian bulan</p>
+                <div class="relative w-full h-48 sm:h-64"><canvas id="growthChartCanvas"></canvas></div>
+            </section>
+            
+            <!-- 6. TABEL PERKEMBANGAN BULANAN -->
+            <section class="card-clean p-4 sm:p-6 md:p-8 w-full overflow-hidden">
+                <h3 class="text-base sm:text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">6. Tabel Perkembangan Bulanan (Pips)</h3>
+                <div class="w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-300">
+                    <table class="monthly-table text-slate-600 w-full text-xs">
+                        <thead class="text-[10px] sm:text-xs text-slate-700 uppercase bg-slate-50 font-bold" id="monthly-thead"></thead>
+                        <tbody id="monthly-tbody"></tbody>
+                    </table>
+                </div>
+            </section>
+            
+            </div>
+        </main>
+
+        <!-- ▼▼▼ FOOTER PROFESIONAL & DESKRIPTIF LEODRA ▼▼▼ -->
+        <footer class="bg-[#14213d] text-white mt-auto w-full border-t border-[#14213d] relative z-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-8 md:gap-10 mb-8">
+                    <!-- Kiri: Brand & Deskripsi -->
+                    <div class="col-span-1 sm:col-span-2 md:col-span-6 lg:col-span-5 text-center sm:text-left">
+                        <span class="font-light text-xl md:text-2xl tracking-widest text-white font-merriweather block mb-3 md:mb-4">LEODRA</span>
+                        <p class="text-[11px] md:text-xs text-slate-300 leading-relaxed text-justify sm:text-left">
+                            Platform manajemen risiko dan analitik trading profesional. <br class="hidden lg:block mb-2">
+                            <strong class="text-white">Keunggulan Eksklusif:</strong> Satu-satunya layanan dengan integrasi otomatis <strong>Backtest berbasis Excel (TF)</strong>, presisi kustomisasi <em>Take Profit/Risk Ratio</em> dinamis, serta analitik probabilitas performa mendalam yang tidak tersedia pada kalkulator trading konvensional.
+                        </p>
+                    </div>
+
+                    <!-- Tengah: Menu Navigasi -->
+                    <div class="col-span-1 md:col-span-4 lg:col-span-5 flex flex-col items-center sm:items-start md:pl-8 lg:pl-16 w-full">
+                        <h4 class="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3 md:mb-4 border-b border-white/10 pb-2 w-full max-w-[200px] text-center sm:text-left">Menu Navigasi</h4>
+                        <div class="grid grid-cols-2 gap-x-4 md:gap-x-8 gap-y-3 text-[10px] md:text-[11px] font-bold tracking-wider uppercase text-slate-300 w-full max-w-[280px]">
+                            <a href="index.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Home</a>
+                            <a href="investasi.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Investasi</a>
+                            <a href="login.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Login</a>
+                            
+                            <!-- MENU AKTIF FOOTER: BACKTEST -->
+                            <a href="backtest.html" class="text-white flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-white"></i> <span class="border-b border-white pb-0.5">Backtest</span></a>
+                            
+                            <a href="beranda.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Beranda Trader</a>
+                            <a href="berandaanalis.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Beranda Analis</a>
+                            <a href="edukasi.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Education for Student</a>
+                            <a href="topanalisdantrader.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Top Analis Dan Trader</a>
+                            <a href="langganan.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Langganan</a>
+                            <a href="pengaturan.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Pengaturan</a>
+                        </div>
+                    </div>
+
+                    <!-- Kanan: Sosial Media & Kontak -->
+                    <div class="col-span-1 md:col-span-2 lg:col-span-2 flex flex-col items-center sm:items-start md:items-end w-full">
+                        <h4 class="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3 md:mb-4 border-b border-white/10 pb-2 w-full max-w-[150px] md:max-w-[120px] text-center sm:text-left md:text-right">Terhubung</h4>
+                        <div class="flex flex-row md:flex-col items-center sm:items-start md:items-end gap-4 md:gap-3">
+                            <a href="https://instagram.com" target="_blank" class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group">
+                                <span class="text-[10px] md:text-[11px] font-bold tracking-wider uppercase hidden md:block">Instagram</span>
+                                <i data-lucide="instagram" class="w-5 h-5 md:w-4 md:h-4 group-hover:scale-110 transition-transform"></i>
+                            </a>
+                            <a href="mailto:support@leodra.com" class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group" title="Email Support">
+                                <span class="text-[10px] md:text-[11px] font-bold tracking-wider uppercase hidden md:block">Support</span>
+                                <i data-lucide="mail" class="w-5 h-5 md:w-4 md:h-4 group-hover:scale-110 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian Bawah: Disclaimer & Copyright -->
+                <div class="border-t border-white/10 pt-5 flex flex-col lg:flex-row justify-between items-center gap-4 md:gap-6 text-[9px] md:text-[10px] text-slate-400 text-center lg:text-left">
+                    <div class="max-w-4xl leading-relaxed">
+                        <strong class="text-slate-300">Peringatan Risiko:</strong> Trading pada instrumen keuangan membawa tingkat risiko tinggi. LEODRA adalah alat bantu analisis dan tidak menyediakan saran investasi. 
+                        <span class="inline-block mt-2 lg:mt-0 lg:ml-2">
+                            <a href="#" class="hover:text-slate-300 underline transition-colors">Syarat & Ketentuan</a> &bull; 
+                            <a href="#" class="hover:text-slate-300 underline transition-colors">Kebijakan Privasi</a>
+                        </span>
+                    </div>
+                    
+                    <div class="flex flex-col items-center lg:items-end gap-1.5 md:gap-2 flex-shrink-0">
+                        <div class="flex items-center gap-2 md:gap-3 font-medium tracking-wide">
+                            <span class="flex items-center gap-1 md:gap-1.5"><span class="w-1.5 h-1.5 rounded-none bg-emerald-500 animate-pulse"></span> Sistem Normal</span>
+                            <span class="text-white/20">|</span>
+                            <span>Versi 1.2.0</span>
+                        </div>
+                        <p>&copy; 2026 LEODRA Analytics. Hak Cipta Dilindungi.</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- MODAL: Upload Excel TF (Disederhanakan tanpa input modal/risiko) -->
+    <div id="tf-modal" class="fixed inset-0 z-[80] hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 w-full h-full">
+        <div class="bg-white w-full max-w-md rounded-none shadow-2xl p-5 md:p-6 transform transition-all scale-95 opacity-0 max-h-[90vh] overflow-y-auto" id="tf-modal-content">
+            <div class="flex justify-between items-center mb-4 md:mb-6">
+                <h3 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="settings-2" class="w-4 h-4 md:w-5 md:h-5 text-blue-600"></i>
+                    Upload Data Excel
+                </h3>
+                <button onclick="closeTfModal()" class="text-slate-400 hover:text-slate-600 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">Upload Template (.csv / .xlsx)</label>
+                    <div class="relative">
+                        <input type="file" id="tf-file-input" accept=".csv, .xlsx, .xls" class="block w-full text-xs text-slate-500 file:mr-2 md:file:mr-4 file:py-2 file:px-3 file:rounded-none file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 input-modern rounded-none border border-slate-200">
+                    </div>
+                    <p class="text-[9px] sm:text-[10px] text-slate-400 mt-1">Format: Pair;Action;Tanggal Entry;Tanggal Exit;Entry;TP;SL;Keterangan</p>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-6 md:mt-8">
+                <button onclick="closeTfModal()" class="w-full sm:w-1/2 py-2.5 md:py-3 rounded-none border border-slate-200 text-slate-600 font-bold text-xs md:text-sm hover:bg-slate-50 transition order-2 sm:order-1">Batal</button>
+                <button onclick="saveTfConfig()" class="w-full sm:w-1/2 py-2.5 md:py-3 rounded-none bg-blue-600 text-white font-bold text-xs md:text-sm hover:bg-blue-700 shadow-md shadow-blue-100 transition order-1 sm:order-2">Simpan File</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals Umum -->
+    <div id="error-modal" class="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/30 backdrop-blur-sm p-4 hidden w-full h-full">
+        <div class="bg-white w-full max-w-sm p-5 md:p-6 rounded-none shadow-2xl border-l-4 border-rose-500 mx-4">
+            <div class="text-rose-600 font-bold text-base md:text-lg mb-1 md:mb-2 flex items-center gap-2"><i data-lucide="alert-circle" class="w-5 h-5"></i>Kesalahan Input</div>
+            <p id="error-modal-message" class="text-xs md:text-sm text-slate-600 mb-4">...</p>
+            <div class="flex justify-end"><button id="error-modal-close" class="px-4 py-2 rounded-none bg-slate-900 text-white text-xs md:text-sm font-bold">OK</button></div>
+        </div>
+    </div>
+    <div id="delete-all-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 backdrop-blur-sm p-4 hidden w-full h-full">
+        <div class="bg-white w-full max-w-sm p-5 md:p-6 rounded-none shadow-2xl mx-4">
+            <h3 class="text-base md:text-lg font-bold text-slate-800 mb-3 md:mb-4 flex items-center gap-2"><i data-lucide="trash-2" class="w-5 h-5 text-rose-500"></i>Hapus Semua Data?</h3>
+            <div class="flex justify-end gap-2 md:gap-3">
+                <button id="delete-all-cancel" class="px-4 py-2 rounded-none text-xs md:text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50">Batal</button>
+                <button id="delete-all-confirm" class="px-4 py-2 rounded-none text-xs md:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIKA JAVASCRIPT (MODIFIED FOR PIPS) -->
+    <script>
+        // Sinkronisasi User Data & Header Time
+        function loadUserData() {
+            const userStr = localStorage.getItem("user");
+            const mobileAvatar = document.getElementById('mobile-user-avatar');
+            const desktopAvatar = document.getElementById('desktop-user-avatar');
+            const desktopUser = document.getElementById('desktop-user-info');
+            const mobileUserName = document.getElementById('mobile-user-name');
+            const mobileUserEmail = document.getElementById('mobile-user-email');
+            const mobileTime = document.getElementById('mobile-user-time');
+            
+            if(userStr) {
+                try {
+                    const u = JSON.parse(userStr); 
+                    const name = u.name || u.email || "User"; 
+                    const email = u.email || "";
+                    let regTime = u.timestamp || "Aktif";
+                    
+                    if(desktopUser) desktopUser.innerHTML = name;
+                    if(mobileUserName) mobileUserName.textContent = name;
+                    if(mobileUserEmail) mobileUserEmail.textContent = email;
+                    if(mobileTime) mobileTime.textContent = regTime;
+                    
+                    const avatarUrl = u.picture || u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0f172a&color=fff&bold=true`;
+                    if(mobileAvatar) mobileAvatar.src = avatarUrl;
+                    if(desktopAvatar) desktopAvatar.src = avatarUrl;
+                } catch(e){}
+            } else {
+                if(desktopUser) { desktopUser.textContent = "Mode Tamu"; desktopUser.className = "text-xs font-light text-gray-600 leading-tight mt-1"; }
+                if(mobileUserName) mobileUserName.textContent = "Guest";
+                if(mobileUserEmail) mobileUserEmail.textContent = "Belum login";
+                if(mobileAvatar) mobileAvatar.src = `https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff&bold=true`;
+                if(desktopAvatar) desktopAvatar.src = `https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff&bold=true`;
+            }
+        }
+
+        function updateHeaderTime() {
+            const now = new Date();
+            const elClock = document.getElementById("headerRealTimeClock");
+            if (elClock) elClock.textContent = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).replace(/\./g, ':');
+            const elDate = document.getElementById("headerRealTimeDate");
+            if (elDate) elDate.textContent = now.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+        }
+
+        window.toggleMenu = function() {
+            const m = document.getElementById('mobile-menu');
+            const iconMenu = document.getElementById('icon-menu');
+            const iconClose = document.getElementById('icon-close');
+            
+            if(m) { 
+                m.classList.toggle('translate-x-full'); 
+                const isOpen = !m.classList.contains('translate-x-full');
+                
+                document.body.style.overflow = isOpen ? 'hidden' : 'auto'; 
+                
+                if(isOpen) {
+                    if(iconMenu) { iconMenu.classList.remove('scale-100', 'rotate-0', 'opacity-100'); iconMenu.classList.add('scale-0', 'rotate-90', 'opacity-0'); }
+                    if(iconClose) { iconClose.classList.remove('scale-0', '-rotate-90', 'opacity-0'); iconClose.classList.add('scale-100', 'rotate-0', 'opacity-100'); }
+                } else {
+                    if(iconClose) { iconClose.classList.remove('scale-100', 'rotate-0', 'opacity-100'); iconClose.classList.add('scale-0', '-rotate-90', 'opacity-0'); }
+                    if(iconMenu) { iconMenu.classList.remove('scale-0', 'rotate-90', 'opacity-0'); iconMenu.classList.add('scale-100', 'rotate-0', 'opacity-100'); }
+                }
+            }
+        }
+
+        window.toggleSidebarCollapse = function() {
+            const sidebar = document.getElementById('desktop-sidebar');
+            const wrapper = document.getElementById('main-wrapper');
+            sidebar.classList.toggle('is-collapsed');
+            if (sidebar.classList.contains('is-collapsed')) {
+                wrapper.classList.remove('md:ml-64', 'md:w-[calc(100%-16rem)]');
+                wrapper.classList.add('md:ml-[5.5rem]', 'md:w-[calc(100%-5.5rem)]');
+            } else {
+                wrapper.classList.add('md:ml-64', 'md:w-[calc(100%-16rem)]');
+                wrapper.classList.remove('md:ml-[5.5rem]', 'md:w-[calc(100%-5.5rem)]');
+            }
+            setTimeout(() => { if (typeof growthChartInstance !== 'undefined' && growthChartInstance) growthChartInstance.resize(); }, 300);
+        }
+
+        window.logout = function() {
+            if(confirm("Keluar dari sesi ini?")) { localStorage.removeItem("user"); localStorage.removeItem("token"); window.location.href='login.html'; }
+        }
+
+        // Global State & Config (Backtest Pips Core Engine)
+        let tradeHistory = [];
+        let currentCalcData = {};
+        let currentMonthlyData = {}; 
+        let growthChartInstance = null;
+
+        // TF Logic Variables
+        let tfRawData = []; 
+        let tfConfig = { filename: '' };
+
+        // DOM Elements
+        let pairInput, orderTypeInput, entryPriceInput, slPriceInput, tpPriceInput, customRrInput;
+        let openTimeInput, closeTimeInput, slPipsOutput, tpPipsOutput, rrActualOutput, statusElement;
+        let saveBtn, resetBtn, historyList;
+        let deleteAllModal, errorModal, errorMessage;
+        let btnDownloadExcel, btnDownloadPdf, monthlyThead, monthlyTbody, importExcelInput;
+
+        // Helper Functions
+        const generateUUID = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+        const setTextIfElementExists = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+        const parseSafeFloat = (input) => {
+            if (typeof input === 'number') return input;
+            if (typeof input !== 'string') return 0;
+            return parseFloat(input.replace(/\$/g, '').replace(/,/g, '').trim()) || 0;
+        };
+        const safeDateISO = (val) => {
+            if (!val) return new Date().toISOString().slice(0, 16);
+            const d = new Date(val);
+            return isNaN(d.getTime()) ? new Date().toISOString().slice(0, 16) : d.toISOString().slice(0, 16);
+        };
+        const showErrorModal = (msg) => { if(errorMessage && errorModal) { errorMessage.textContent = msg; errorModal.classList.remove('hidden'); } else { alert(msg); } };
+
+        function saveTradeHistory() {
+            localStorage.setItem('tradeCal_history_v6_pips', JSON.stringify(tradeHistory));
+        }
+
+        function saveFormInputs() {
+            if(!pairInput || !entryPriceInput) return;
+            const formData = {
+                pair: pairInput.value,
+                orderType: orderTypeInput.value,
+                entry: entryPriceInput.value,
+                sl: slPriceInput.value,
+                tp: tpPriceInput.value,
+                rr: customRrInput.value,
+                openTime: openTimeInput.value,
+                closeTime: closeTimeInput.value
+            };
+            localStorage.setItem('tradeCal_inputs_v6_pips', JSON.stringify(formData));
+        }
+
+        function loadFormInputs() {
+            const saved = localStorage.getItem('tradeCal_inputs_v6_pips');
+            if (saved && pairInput) {
+                try {
+                    const data = JSON.parse(saved);
+                    if(data.pair) pairInput.value = data.pair;
+                    if(data.orderType) orderTypeInput.value = data.orderType;
+                    if(data.entry) entryPriceInput.value = data.entry;
+                    if(data.sl) slPriceInput.value = data.sl;
+                    if(data.tp) tpPriceInput.value = data.tp;
+                    if(data.rr) customRrInput.value = data.rr;
+                    if(data.openTime) openTimeInput.value = data.openTime;
+                    if(data.closeTime) closeTimeInput.value = data.closeTime;
+                } catch (e) { console.error("Error loading inputs", e); }
+            }
+        }
+
+        // --- TF FEATURE LOGIC (PIPS ONLY) ---
+        window.openTfModal = function(isEdit = false) {
+            const modal = document.getElementById('tf-modal');
+            const content = document.getElementById('tf-modal-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        };
+        window.closeTfModal = function() {
+            const modal = document.getElementById('tf-modal');
+            const content = document.getElementById('tf-modal-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.add('hidden'); }, 200);
+        };
+        window.saveTfConfig = function() {
+            const fileInput = document.getElementById('tf-file-input');
+            if(fileInput.files.length === 0 && tfRawData.length === 0) return showErrorModal("Harap unggah file template (.csv / .xlsx).");
+            if(fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                tfConfig.filename = file.name;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {raw: false});
+                    if(jsonData.length === 0) return showErrorModal("File kosong atau format salah.");
+                    const firstRow = jsonData[0];
+                    const keys = Object.keys(firstRow).map(k => k.toLowerCase());
+                    if(!keys.some(k => k.includes('pair')) || !keys.some(k => k.includes('entry'))) return showErrorModal("Format Template Salah. Pastikan header sesuai: Pair;Action;Tanggal Entry;...");
+                    tfRawData = jsonData;
+                    updateTfUiState();
+                    closeTfModal();
+                };
+                reader.readAsArrayBuffer(file);
+            } else { updateTfUiState(); closeTfModal(); }
+        };
+        function updateTfUiState() {
+            const controls = document.getElementById('tf-controls');
+            const filenameEl = document.getElementById('tf-filename');
+            if(tfRawData.length > 0 && controls && filenameEl) { controls.classList.remove('hidden'); filenameEl.textContent = tfConfig.filename; }
+        }
+        window.applyTfData = function() {
+            if(tfRawData.length === 0) return;
+            tradeHistory = [];
+            let processedTrades = tfRawData.map(row => {
+                const getVal = (keyPart) => { const key = Object.keys(row).find(k => k.toLowerCase().includes(keyPart.toLowerCase())); return key ? row[key] : null; };
+                const pair = getVal('Pair') || 'XAUUSD';
+                const actionRaw = getVal('Action') || 'Buy';
+                const type = actionRaw.toLowerCase().includes('buy') ? 'buy' : 'sell';
+                const entry = parseSafeFloat(getVal('Entry'));
+                const tp = parseSafeFloat(getVal('TP'));
+                const sl = parseSafeFloat(getVal('SL'));
+                const tEntry = getVal('Tanggal Entry');
+                const tExit = getVal('Tanggal Exit');
+                const ket = (getVal('Keterangan') || '').toString();
+                if(!entry || !sl) return null;
+                return { id: generateUUID(), timestamp: safeDateISO(tEntry), closeTime: safeDateISO(tExit), pair, type, entry, sl, tp, ket };
+            }).filter(t => t !== null);
+            
+            processedTrades.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            processedTrades.forEach(t => {
+                const pipsMultiplier = (t.pair.toUpperCase().includes('XAU') || t.pair.toUpperCase().includes('GOLD')) ? 10 : (t.pair.toUpperCase().includes('NAS') ? 1 : 10000);
+                const slPips = Math.round(Math.abs(t.entry - t.sl) * pipsMultiplier);
+                const tpPips = Math.round(Math.abs(t.entry - t.tp) * pipsMultiplier);
+                
+                let status = 'pending';
+                const k = t.ket.toLowerCase();
+                if (k.includes('win') || k.includes('profit') || k.includes('tp') || k.includes('hit tp')) status = 'win'; 
+                else if (k.includes('loss') || k.includes('sl') || k.includes('rugi') || k.includes('hit sl')) status = 'loss';
+
+                const trade = {
+                    id: t.id, timestamp: t.timestamp, closeTime: t.closeTime,
+                    pair: t.pair, type: t.type, entry: t.entry.toFixed(2), sl: t.sl.toFixed(2), tp: t.tp ? t.tp.toFixed(2) : '0.00',
+                    slPips: slPips, tpPips: tpPips, status: status
+                };
+                tradeHistory.push(trade);
+            });
+            saveTradeHistory(); renderHistory();
+            if(document.getElementById('history-list')) document.getElementById('history-list').scrollIntoView({ behavior: 'smooth' });
+            if(statusElement) {
+                statusElement.textContent = `Kalkulasi TF Selesai. ${tradeHistory.length} data diproses.`;
+                statusElement.classList.add('text-blue-600');
+                setTimeout(() => statusElement.classList.remove('text-blue-600'), 3000);
+            }
+        };
+
+        // --- MAIN LOGIC (PIPS ONLY) ---
+        function calculateRiskData(source = 'base') {
+            if(!pairInput) return { status: "incomplete", message: "DOM belum siap" };
+            
+            const pair = pairInput.value;
+            const orderType = orderTypeInput.value;
+            const entryPrice = parseSafeFloat(entryPriceInput.value);
+            const slPrice = parseSafeFloat(slPriceInput.value);
+            let tpPrice = parseSafeFloat(tpPriceInput.value);
+            let rrRatio = parseSafeFloat(customRrInput.value);
+
+            if (!entryPrice || !slPrice) return { status: "incomplete", message: "Lengkapi data entry dan SL..." };
+
+            let pipsMultiplier = pair === 'XAUUSD' ? 10 : (pair === 'NASDAQ' ? 1 : 10000);
+            let decimals = pair === 'XAUUSD' ? 2 : 5;
+
+            if ((orderType === 'buy' && entryPrice < slPrice) || (orderType === 'sell' && entryPrice > slPrice)) {
+                return { status: "error", message: `Posisi SL salah untuk ${orderType.toUpperCase()}!` };
+            }
+
+            const distSL = Math.abs(entryPrice - slPrice);
+            const slPips = Math.round(distSL * pipsMultiplier);
+
+            // Logic RR vs TP
+            if (source === 'tp') {
+                if (tpPrice > 0 && distSL > 0) {
+                    const distTP = Math.abs(entryPrice - tpPrice);
+                    rrRatio = (distTP / distSL).toFixed(2);
+                    customRrInput.value = rrRatio; 
+                }
+            } else {
+                if (rrRatio > 0) {
+                    const requiredDistTP = distSL * rrRatio;
+                    tpPrice = orderType === 'buy' ? entryPrice + requiredDistTP : entryPrice - requiredDistTP;
+                    tpPriceInput.value = tpPrice.toFixed(decimals);
+                }
+            }
+
+            const distTP = Math.abs(entryPrice - tpPrice);
+            const tpPips = Math.round(distTP * pipsMultiplier);
+
+            return {
+                status: "success",
+                pair, type: orderType, entry: entryPrice, sl: slPrice, tpPrice,
+                slPips, tpPips, rrRatio
+            };
+        }
+
+        function handleCalculation(e) {
+            let source = 'base';
+            if (e && e.target) {
+                if (e.target.id === 'tp-price') source = 'tp';
+                if (e.target.id === 'custom-rr') source = 'rr';
+            }
+
+            const data = calculateRiskData(source);
+            currentCalcData = data;
+            
+            if (data.status === "success" && slPipsOutput) {
+                slPipsOutput.value = data.slPips;
+                tpPipsOutput.value = data.tpPips; 
+                rrActualOutput.value = `1 : ${data.rrRatio}`;
+                
+                if(statusElement) statusElement.textContent = `Validasi Pips Selesai.`;
+                if(saveBtn) saveBtn.disabled = false;
+                if(statusElement) statusElement.classList.remove("text-rose-500");
+                
+            } else {
+                if(saveBtn) saveBtn.disabled = true;
+                if(statusElement) {
+                    if (data.status === 'error') {
+                        statusElement.textContent = data.message;
+                        statusElement.classList.add("text-rose-500");
+                    } else {
+                        statusElement.textContent = "Siap menghitung...";
+                        statusElement.classList.remove("text-rose-500");
+                    }
+                }
+            }
+            saveFormInputs();
+        }
+
+        function handleSaveTrade() {
+            const check = calculateRiskData('base');
+            if (check.status === "error") return showErrorModal(check.message);
+            if (check.status === "incomplete") return showErrorModal("Lengkapi data!");
+            if (currentCalcData.status !== "success") return;
+
+            const newTrade = {
+                id: generateUUID(),
+                timestamp: openTimeInput.value || new Date().toISOString(), 
+                closeTime: closeTimeInput.value || new Date().toISOString(),
+                pair: currentCalcData.pair, type: currentCalcData.type,
+                entry: currentCalcData.entry.toFixed(2), sl: currentCalcData.sl.toFixed(2), 
+                tp: currentCalcData.tpPrice.toFixed(2),
+                slPips: currentCalcData.slPips, tpPips: currentCalcData.tpPips, status: 'pending'
+            };
+            tradeHistory.push(newTrade);
+            saveTradeHistory();
+            renderHistory();
+            handleCalculation(); 
+        }
+
+        function exportToExcel() {
+            if (tradeHistory.length === 0) return showErrorModal("Belum ada data untuk diekspor");
+            const sortedHistory = [...tradeHistory].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            const masterData = sortedHistory.map((t, i) => ({
+                "No": i + 1, "Aset": t.pair, "Posisi": t.type.toUpperCase(),
+                "Entry": parseFloat(t.entry), "SL": parseFloat(t.sl), "TP": parseFloat(t.tp),
+                "Risk (Pips)": t.slPips, "Reward (Pips)": t.tpPips,
+                "Status": t.status.toUpperCase(), "Open": t.timestamp.replace('T',' '), "Close": t.closeTime.replace('T',' ')
+            }));
+            const ws = XLSX.utils.json_to_sheet(masterData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Laporan Pips");
+            XLSX.writeFile(wb, "BacktestPips_LEODRA.xlsx");
+        }
+
+        async function exportToPdf() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            doc.setFontSize(16); doc.text("Laporan Backtest Pips - LEODRA", 14, 15);
+            doc.setFontSize(10); doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 21);
+            const sorted = [...tradeHistory].sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
+            doc.autoTable({
+                startY: 25,
+                head: [['No','Pair','Pos','Entry','SL','TP','Risk Pips','Reward Pips','Status','Close Time']],
+                body: sorted.map((t,i)=>[i+1,t.pair,t.type.toUpperCase(),t.entry,t.sl,t.tp,t.slPips,t.tpPips,t.status.toUpperCase(),t.closeTime.slice(0,16).replace('T',' ')]),
+                theme:'striped', styles:{fontSize:8}
+            });
+            doc.save("BacktestPips_LEODRA.pdf");
+        }
+
+        function updateAnalytics() {
+            const completed = tradeHistory.filter(t => t.status === 'win' || t.status === 'loss');
+            const wins = completed.filter(t => t.status === 'win').length;
+            const winrate = completed.length > 0 ? (wins / completed.length * 100) : 0;
+            const lossrate = completed.length > 0 ? (100 - winrate) : 0;
+
+            let runningPips = 0;
+            const chron = [...tradeHistory].sort((a,b) => new Date(a.closeTime) - new Date(b.closeTime));
+
+            let peakPips = 0, maxDDPips = 0, totalLossPips = 0;
+            const monthlyData = {};
+            let globalMaxConWin = 0, globalMaxConLoss = 0, currConWin = 0, currConLoss = 0;
+            let totalRR = 0, countRR = 0;
+            
+            let totalWinPipsSum = 0;
+            let totalLossPipsSum = 0;
+            let maxWinPips = 0;
+            let maxLossPips = 0;
+            let conWinPips = 0, maxConWinPips = 0;
+            let conLossPips = 0, maxConLossPips = 0;
+
+            chron.forEach(t => {
+                const riskPips = parseFloat(t.slPips);
+                const rewardPips = parseFloat(t.tpPips);
+                if (riskPips > 0 && rewardPips > 0) {
+                     const rr = rewardPips / riskPips;
+                     totalRR += rr;
+                     countRR++;
+                }
+
+                if(t.status === 'pending') return;
+
+                const pL = t.status==='win' ? rewardPips : -riskPips;
+                if(pL < 0) {
+                    totalLossPips += pL;
+                    totalLossPipsSum += pL;
+                    if(pL < maxLossPips) maxLossPips = pL;
+                } else {
+                    totalWinPipsSum += pL;
+                    if(pL > maxWinPips) maxWinPips = pL;
+                }
+                
+                if(t.status==='win') { 
+                    currConWin++; conWinPips += pL; 
+                    currConLoss=0; conLossPips=0; 
+                    if(currConWin > globalMaxConWin) { globalMaxConWin = currConWin; maxConWinPips = conWinPips; } 
+                } else { 
+                    currConLoss++; conLossPips += pL; 
+                    currConWin=0; conWinPips=0; 
+                    if(currConLoss > globalMaxConLoss) { globalMaxConLoss = currConLoss; maxConLossPips = conLossPips; } 
+                }
+
+                runningPips += pL;
+                if(runningPips > peakPips) peakPips = runningPips;
+                
+                const dd = peakPips - runningPips; 
+                if(dd > maxDDPips) maxDDPips = dd;
+
+                const mName = new Date(t.closeTime).toLocaleString('id-ID', {month:'short', year:'numeric'});
+                if(!monthlyData[mName]) monthlyData[mName] = { pips:0, count:0, win:0, loss:0 };
+                
+                monthlyData[mName].pips += pL;
+                monthlyData[mName].count++;
+                if(t.status==='win') monthlyData[mName].win++; else monthlyData[mName].loss++;
+            });
+
+            const avgWinPips = wins > 0 ? totalWinPipsSum / wins : 0;
+            const avgLossPips = (completed.length - wins) > 0 ? Math.abs(totalLossPipsSum) / (completed.length - wins) : 0;
+
+            setTextIfElementExists('stat-final-pips', runningPips > 0 ? `+${runningPips}` : runningPips);
+            const elFinalPips = document.getElementById('stat-final-pips');
+            if(elFinalPips) {
+                elFinalPips.className = `text-lg sm:text-2xl font-bold font-mono ${runningPips >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            }
+
+            setTextIfElementExists('stat-winrate', `${winrate.toFixed(1)}%`);
+            setTextIfElementExists('stat-drawdown-pips', maxDDPips);
+            setTextIfElementExists('stat-loss-prob', `${lossrate.toFixed(1)}%`);
+            setTextIfElementExists('stat-total-loss-pips', totalLossPips);
+            
+            setTextIfElementExists('stat-avg-win-pips', `+${avgWinPips.toFixed(1)}`);
+            setTextIfElementExists('stat-avg-loss-pips', `-${avgLossPips.toFixed(1)}`);
+            setTextIfElementExists('stat-max-pips', `+${maxWinPips}`);
+            setTextIfElementExists('stat-min-pips', `${maxLossPips}`);
+
+            setTextIfElementExists('stat-con-win', `${globalMaxConWin}x`);
+            setTextIfElementExists('stat-con-win-pips', `+${maxConWinPips} Pips`);
+            setTextIfElementExists('stat-con-loss', `${globalMaxConLoss}x`);
+            setTextIfElementExists('stat-con-loss-pips', `${maxConLossPips} Pips`);
+
+            const avgRR = countRR > 0 ? (totalRR / countRR).toFixed(2) : "0.00";
+            setTextIfElementExists('stat-avg-rr', `1 : ${avgRR}`);
+
+            currentMonthlyData = monthlyData;
+
+            renderGrowthChart(chron);
+            renderMonthlyTable(monthlyData);
+        }
+
+        function renderMonthlyTable(data) {
+            if(!monthlyThead || !monthlyTbody) return;
+            const months = Object.keys(data);
+            let thead = `<tr><th class="bg-slate-50 text-left">Bulan</th>`;
+            months.forEach(m => thead += `<th>${m}</th>`);
+            thead += `<th class="bg-slate-100">Total (Pips)</th></tr>`;
+            monthlyThead.innerHTML = thead;
+
+            let html = "";
+            const row = (label, key) => {
+                let r = `<tr><td class="font-medium text-slate-700">${label}</td>`;
+                let sum = 0;
+                months.forEach(m => {
+                    const val = data[m][key];
+                    if(typeof val === 'number') sum += val;
+                    const color = val >= 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
+                    r += `<td class="${color}">${typeof val === 'number' ? (val>0?'+': '')+val.toFixed(1) : val}</td>`;
+                });
+                r += `<td class="font-bold bg-slate-50 ${sum>=0?'text-emerald-600':'text-rose-600'}">${(sum>0?'+':'')+sum.toFixed(1)}</td></tr>`;
+                return r;
+            }
+            html += row("Net Profit (Pips)", "pips");
+            html += `<tr><td class="font-medium text-slate-700">Win / Loss</td>`;
+            let wT=0, lT=0;
+            months.forEach(m => { html += `<td>${data[m].win}/${data[m].loss}</td>`; wT+=data[m].win; lT+=data[m].loss; });
+            html += `<td class="font-bold bg-slate-50">${wT}/${lT}</td></tr>`;
+            monthlyTbody.innerHTML = html;
+        }
+
+        function renderGrowthChart(sorted) {
+            const canvas = document.getElementById('growthChartCanvas');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if(growthChartInstance) growthChartInstance.destroy();
+            const labels = ["Start"];
+            const data = [0]; 
+            let accPips = 0;
+            
+            sorted.forEach(t => {
+                if(t.status === 'pending') return;
+                const pL = t.status==='win' ? parseFloat(t.tpPips) : -parseFloat(t.slPips);
+                accPips += pL;
+                labels.push(t.closeTime.slice(5,10));
+                data.push(accPips);
+            });
+            
+            growthChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets: [{ label: 'Kumulatif Pips', data, borderColor:'#0f172a', borderWidth:2, pointRadius:0, fill:true, backgroundColor:'rgba(15,23,42,0.05)', tension:0.2 }] },
+                options: { responsive:true, maintainAspectRatio:false, scales:{x:{display:false}, y:{grid:{borderDash:[4,4]}}}, plugins:{legend:{display:false}} }
+            });
+        }
+
+        window.setStatus = function(id, status) {
+            const t = tradeHistory.find(x => x.id === id);
+            if (t) { t.status = status; saveTradeHistory(); renderHistory(); }
+        }
+        window.deleteTrade = function(id) {
+            tradeHistory = tradeHistory.filter(t => t.id !== id);
+            saveTradeHistory(); renderHistory();
+        }
+
+        function renderHistory() {
+            if(!historyList) return;
+            historyList.innerHTML = '';
+            if(tradeHistory.length === 0) { 
+                historyList.innerHTML = '<div id="history-empty-state" class="flex flex-col items-center justify-center h-full text-slate-400"><span class="text-xs font-medium">Belum ada data backtest</span></div>';
+                return;
+            }
+            const sorted = [...tradeHistory].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            sorted.forEach((t, index) => {
+                const num = sorted.length - index; 
+                const div = document.createElement('div');
+                
+                const isW = t.status === 'win';
+                const isL = t.status === 'loss';
+                const isP = t.status === 'pending';
+                
+                // Styling dinamis berdasarkan status
+                let borderColor = isW ? 'border-emerald-200' : (isL ? 'border-rose-200' : 'border-slate-200');
+                let bgColor = isW ? 'bg-emerald-50/20' : (isL ? 'bg-rose-50/20' : 'bg-white');
+                
+                div.className = `${bgColor} border ${borderColor} p-4 rounded-none shadow-sm relative group transition hover:shadow-md hover:border-slate-300`;
+                
+                const typeColor = t.type === 'buy' ? 'text-emerald-600 border-emerald-200 bg-emerald-50' : 'text-rose-600 border-rose-200 bg-rose-50';
+                const rrVal = (parseFloat(t.slPips) > 0) ? (parseFloat(t.tpPips) / parseFloat(t.slPips)).toFixed(2) : "0.0";
+                
+                const plVal = isW ? `+${t.tpPips}` : (isL ? `-${t.slPips}` : '0');
+                const plCol = isW ? 'text-emerald-600' : (isL ? 'text-rose-600' : 'text-slate-500');
+                
+                let footerContent = '';
+                if(isP) {
+                    footerContent = `
+                        <div class="flex items-center gap-1.5 text-[10px] font-bold text-amber-500 uppercase tracking-widest">
+                            <span class="w-1.5 h-1.5 bg-amber-500 rounded-none animate-pulse"></span> Running
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="setStatus('${t.id}','win')" class="text-[9px] sm:text-[10px] bg-white border border-emerald-200 text-emerald-600 px-4 py-1.5 rounded-none font-bold transition hover:bg-emerald-50 uppercase tracking-wider shadow-sm">Hit TP</button>
+                            <button onclick="setStatus('${t.id}','loss')" class="text-[9px] sm:text-[10px] bg-white border border-rose-200 text-rose-600 px-4 py-1.5 rounded-none font-bold transition hover:bg-rose-50 uppercase tracking-wider shadow-sm">Hit SL</button>
+                        </div>
+                    `;
+                } else {
+                    const icon = isW ? 'check-circle' : 'x-circle';
+                    const statusText = isW ? 'PROFIT' : 'LOSS';
+                    footerContent = `
+                        <div class="flex items-center gap-1.5 text-[10px] font-bold ${plCol} uppercase tracking-widest">
+                            <i data-lucide="${icon}" class="w-3.5 h-3.5"></i> ${statusText}
+                        </div>
+                        <div class="text-sm sm:text-lg font-bold font-mono ${plCol}">${plVal} Pips</div>
+                    `;
+                }
+
+                div.innerHTML = `
+                    <!-- Bagian Header Kartu -->
+                    <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-none uppercase tracking-widest">#${num}</span>
+                            <span class="font-bold text-slate-800 text-sm md:text-base">${t.pair}</span>
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 border rounded-none uppercase ${typeColor}">${t.type}</span>
+                        </div>
+                        <div class="flex items-center gap-3 md:gap-4">
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 font-medium flex items-center gap-1.5 font-mono"><i data-lucide="clock" class="w-3 h-3"></i> ${t.timestamp.replace('T', ' ')}</span>
+                            <button onclick="deleteTrade('${t.id}')" class="text-slate-300 hover:text-rose-500 transition" title="Hapus Trade"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Bagian Detail Data -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold mb-1">Entry Price</p>
+                            <p class="text-xs font-mono font-bold text-slate-700">${t.entry}</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold mb-1">SL / TP Target</p>
+                            <p class="text-[11px] font-mono font-medium text-slate-600">${t.sl} <span class="text-slate-300 mx-1">|</span> ${t.tp}</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold mb-1">Risk : Reward (Pips)</p>
+                            <p class="text-[11px] font-mono font-medium text-slate-600">${t.slPips} <span class="text-slate-300 mx-1">|</span> ${t.tpPips}</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold mb-1">Rasio Aktual</p>
+                            <p class="text-xs font-mono font-bold text-blue-600">1 : ${rrVal}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Bagian Aksi / Hasil -->
+                    <div class="flex justify-between items-center bg-slate-50/80 p-3 border border-slate-100 rounded-none">
+                        ${footerContent}
+                    </div>
+                `;
+                historyList.appendChild(div);
+            });
+            if(window.lucide) window.lucide.createIcons();
+            updateAnalytics();
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load User Data Initialization
+            loadUserData();
+
+            // Mapping DOM
+            pairInput=document.getElementById('pair'); orderTypeInput=document.getElementById('order-type');
+            entryPriceInput=document.getElementById('entry-price'); slPriceInput=document.getElementById('sl-price'); 
+            tpPriceInput = document.getElementById('tp-price'); customRrInput = document.getElementById('custom-rr');
+            openTimeInput=document.getElementById('open-time'); closeTimeInput=document.getElementById('close-time'); 
+            slPipsOutput=document.getElementById('result-sl-pips'); tpPipsOutput=document.getElementById('result-tp-pips'); 
+            rrActualOutput=document.getElementById('result-rr-actual'); statusElement=document.getElementById('calculation-status');
+            saveBtn=document.getElementById('btn-save'); resetBtn=document.getElementById('btn-reset'); historyList=document.getElementById('history-list');
+            deleteAllModal=document.getElementById('delete-all-modal'); errorModal=document.getElementById('error-modal'); errorMessage=document.getElementById('error-modal-message'); 
+            btnDownloadExcel=document.getElementById('btn-download-excel'); btnDownloadPdf=document.getElementById('btn-download-pdf'); 
+            importExcelInput=document.getElementById('import-excel'); monthlyThead=document.getElementById('monthly-thead'); monthlyTbody=document.getElementById('monthly-tbody');
+
+            // Event Listeners
+            const baseInputs = [pairInput, orderTypeInput, entryPriceInput, slPriceInput];
+            baseInputs.forEach(el => { if(el) el.addEventListener('input', () => handleCalculation({target:{id:'base'}})); });
+            
+            if(tpPriceInput) tpPriceInput.addEventListener('input', handleCalculation);
+            if(customRrInput) customRrInput.addEventListener('input', handleCalculation);
+
+            if(resetBtn) {
+                resetBtn.onclick = () => { 
+                    if(pairInput) pairInput.value='XAUUSD'; if(orderTypeInput) orderTypeInput.value='buy'; 
+                    if(entryPriceInput) entryPriceInput.value=''; if(slPriceInput) slPriceInput.value=''; 
+                    if(tpPriceInput) tpPriceInput.value=''; if(customRrInput) customRrInput.value='2'; 
+                    handleCalculation(); 
+                };
+            }
+            if(saveBtn) saveBtn.onclick = handleSaveTrade;
+            
+            if(document.getElementById('btn-delete-all')) document.getElementById('btn-delete-all').onclick = () => { if(deleteAllModal) deleteAllModal.classList.remove('hidden'); };
+            if(document.getElementById('delete-all-cancel')) document.getElementById('delete-all-cancel').onclick = () => { if(deleteAllModal) deleteAllModal.classList.add('hidden'); };
+            if(document.getElementById('delete-all-confirm')) document.getElementById('delete-all-confirm').onclick = () => { tradeHistory=[]; saveTradeHistory(); renderHistory(); if(deleteAllModal) deleteAllModal.classList.add('hidden'); };
+            if(document.getElementById('error-modal-close')) document.getElementById('error-modal-close').onclick = () => { if(errorModal) errorModal.classList.add('hidden'); };
+            if(btnDownloadExcel) btnDownloadExcel.onclick = exportToExcel;
+            if(btnDownloadPdf) btnDownloadPdf.onclick = exportToPdf;
+            
+            if(importExcelInput) {
+                importExcelInput.onchange = function(e) {
+                    const f = e.target.files[0]; if(!f)return;
+                    const r = new FileReader();
+                    r.onload = evt => {
+                        const wb = XLSX.read(new Uint8Array(evt.target.result), {type:'array'});
+                        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                        tradeHistory = rows.map(r => ({
+                            id: generateUUID(), timestamp: safeDateISO(r["Open"]), closeTime: safeDateISO(r["Close"]),
+                            pair: r["Aset"]||'XAUUSD', type: (r["Posisi"]||'BUY').toLowerCase(),
+                            entry: parseSafeFloat(r["Entry"]), sl: parseSafeFloat(r["SL"]), tp: parseSafeFloat(r["TP"]),
+                            slPips: parseSafeFloat(r["Risk (Pips)"]), tpPips: parseSafeFloat(r["Reward (Pips)"]), status: (r["Status"]||'pending').toLowerCase()
+                        }));
+                        saveTradeHistory(); renderHistory();
+                    };
+                    r.readAsArrayBuffer(f);
+                };
+            }
+
+            loadFormInputs();
+            const stored = localStorage.getItem('tradeCal_history_v6_pips');
+            if(stored) tradeHistory = JSON.parse(stored);
+            
+            handleCalculation();
+            renderHistory();
+            if(window.lucide) window.lucide.createIcons();
+            
+            // Auto Update Clock Init
+            setInterval(updateHeaderTime, 1000); updateHeaderTime();
+            window.addEventListener('resize', () => { if(growthChartInstance) setTimeout(() => growthChartInstance.resize(), 100); });
+        });
+    </script>
+</body>
+</html>

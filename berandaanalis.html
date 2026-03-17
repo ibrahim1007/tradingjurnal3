@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Beranda Analis - LEODRA</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Chart.js untuk Grafik Statistik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Merriweather:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Gaya Global & Font Khusus Header */
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f8fafc; 
+            color: #334155; 
+            margin: 0;
+            padding: 0;
+        }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 0; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .font-merriweather { font-family: 'Merriweather', serif; }
+
+        @media screen and (min-width: 1280px) { body { zoom: 0.8; } }
+        main { margin-top: 6rem !important; }
+        @media screen and (min-width: 768px) { main { margin-top: 7rem !important; } }
+        
+        #desktop-sidebar { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); overflow-x: hidden; white-space: nowrap; }
+        #desktop-sidebar.is-collapsed { width: 5.5rem; }
+        #desktop-sidebar.is-collapsed:hover { width: 16rem; box-shadow: 4px 0 24px rgba(0,0,0,0.08); }
+        #desktop-sidebar.is-collapsed:not(:hover) a.flex, #desktop-sidebar.is-collapsed:not(:hover) button.flex { padding-left: 0 !important; padding-right: 0 !important; justify-content: center !important; }
+        .sidebar-text { transition: opacity 0.2s, max-width 0.3s; max-width: 200px; overflow: hidden; display: inline-block; vertical-align: middle; }
+        #desktop-sidebar.is-collapsed:not(:hover) .sidebar-text { opacity: 0; max-width: 0; }
+        #desktop-sidebar.is-collapsed:not(:hover) .sidebar-icon-margin { margin-right: 0; }
+        .sidebar-icon-margin { transition: margin-right 0.3s; margin-right: 0.75rem; }
+        #toggle-sidebar-btn { transition: transform 0.3s; }
+        #desktop-sidebar.is-collapsed:not(:hover) #toggle-sidebar-btn { transform: rotate(180deg); }
+        #main-wrapper { transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* Kustomisasi input tabel/form (Clean Theme) */
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
+        .clean-card { background: white; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+        .stat-badge { border-left: 3px solid #e2e8f0; }
+        .stat-win { border-left-color: #10b981; }
+        .stat-loss { border-left-color: #f43f5e; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col overflow-x-hidden bg-[#14213d]">
+
+    <!-- ▼▼▼ HEADER UTAMA LEODRA ▼▼▼ -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-gray-200 fixed top-0 w-full z-50 transition-all duration-300 h-20 md:h-24">
+        <div class="w-full h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
+            
+            <div class="flex items-center flex-shrink-0 cursor-pointer" onclick="window.location.href='index.html'">
+                <span class="font-light text-xl md:text-2xl tracking-widest text-black font-merriweather">LEODRA</span>
+            </div>
+
+            <div class="flex-1 flex flex-col justify-center items-center px-1 overflow-hidden">
+                <span id="headerRealTimeClock" class="text-red-600 font-medium text-[11px] sm:text-[12px] md:text-sm tracking-wide leading-none whitespace-nowrap mb-0.5" style="font-family: 'Inter', sans-serif;">
+                    --:--:--
+                </span>
+                <span id="headerRealTimeDate" class="text-black font-light text-[9px] sm:text-[10px] md:text-xs tracking-wide leading-none whitespace-nowrap truncate max-w-full" style="font-family: 'Inter', sans-serif;">
+                    -- -- ----
+                </span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 md:gap-4 flex-shrink-0 min-w-[60px]">
+                <div class="hidden md:flex items-center gap-4">
+                    <div class="text-right">
+                        <!-- Teks Nama Di Desktop (Font Merriweather Eksklusif) -->
+                        <p id="desktop-user-info" class="text-sm font-light tracking-wide text-gray-900 leading-tight font-merriweather">Loading...</p>
+                        <div class="flex items-center justify-end gap-1.5 mt-1">
+                            <div class="w-1.5 h-1.5 rounded-none bg-green-500 animate-pulse"></div>
+                            <span class="text-[10px] text-green-600 font-bold tracking-wider uppercase">Online</span>
+                        </div>
+                    </div>
+                    <!-- Foto Profil Desktop -->
+                    <img id="desktop-user-avatar" src="https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff" alt="Profil User" class="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm flex-shrink-0">
+                </div>
+                
+                <!-- TOMBOL HAMBURGER & CLOSE (DIJADIKAN SATU DENGAN ANIMASI) -->
+                <button onclick="toggleMenu()" id="mobile-menu-btn" class="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-none transition-colors relative w-10 h-10 flex items-center justify-center overflow-hidden" aria-label="Toggle Menu">
+                    <span id="icon-menu" class="absolute transition-all duration-300 transform scale-100 rotate-0 opacity-100 flex items-center justify-center w-full h-full">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </span>
+                    <span id="icon-close" class="absolute transition-all duration-300 transform scale-0 -rotate-90 opacity-0 flex items-center justify-center w-full h-full text-rose-600">
+                        <i data-lucide="x" class="w-7 h-7"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ▼▼▼ MENU MOBILE (OVERLAY) ▼▼▼ -->
+    <div id="mobile-menu" class="fixed inset-0 bg-white z-[40] transform translate-x-full transition-transform duration-300 md:hidden flex flex-col pt-20">
+        
+        <!-- Bagian Info Akun (Fixed di atas, Warna Hitam Khusus, Sudut Tajam) -->
+        <div class="flex-shrink-0 px-4 pt-4 pb-2 bg-white border-b border-gray-100 z-10 shadow-sm relative">
+            <div class="bg-[#0a0a0a] p-5 rounded-none border border-gray-800 shadow-xl">
+                <div class="flex items-center gap-4 mb-4">
+                    <!-- FOTO PROFIL (Lingkaran) -->
+                    <img id="mobile-user-avatar" src="https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff" alt="Profil User" class="w-12 h-12 rounded-full object-cover border-2 border-gray-600 shadow-md flex-shrink-0">
+                    
+                    <div class="overflow-hidden w-full">
+                        <p class="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-1">Identitas Sesi</p>
+                        <!-- Teks Nama & Email Di HP (Font Merriweather Eksklusif) -->
+                        <p id="mobile-user-name" class="text-base font-light tracking-wide text-white truncate font-merriweather mb-0.5">Guest</p>
+                        <p id="mobile-user-email" class="text-xs font-light text-gray-400 truncate font-merriweather">Belum login</p>
+                    </div>
+                </div>
+                <div class="border-t border-gray-800 pt-3 flex justify-between items-center">
+                    <div>
+                        <p class="text-[9px] text-gray-500 font-bold mb-1 uppercase tracking-widest">Status</p>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span class="text-[10px] text-green-500 font-bold uppercase tracking-wider">Online</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[9px] text-gray-500 font-bold mb-1 uppercase tracking-widest">Sesi Aktif</p>
+                        <p id="mobile-user-time" class="text-[10px] sm:text-xs font-mono text-blue-400 font-medium">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bagian Navigasi (Bisa di-scroll vertikal) -->
+        <nav class="flex-1 overflow-y-auto px-4 py-4 pb-10 flex flex-col gap-2 text-sm bg-white">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Menu Utama</p>
+            <a href="index.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Home</span> <i data-lucide="calculator" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="login.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-medium transition-colors"><span>Login</span> <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="beranda.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Beranda Trader</span> <i data-lucide="layout-dashboard" class="w-4 h-4 text-gray-400"></i></a>
+            
+            <!-- MENU AKTIF MOBILE : BERANDA ANALIS -->
+            <a href="berandaanalis.html" class="flex items-center justify-between p-3.5 rounded-none text-[#14213d] bg-[#14213d]/5 border border-[#14213d]/10 font-bold transition-colors"><span>Beranda Analis</span> <i data-lucide="activity" class="w-4 h-4 text-[#14213d]"></i></a>
+            
+            <a href="edukasi.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Education for Student</span> <i data-lucide="graduation-cap" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="investasi.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-medium transition-colors"><span>Investasi</span> <i data-lucide="trending-up" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="backtest.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Backtest</span> <i data-lucide="history" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="langganan.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Langganan</span> <i data-lucide="credit-card" class="w-4 h-4 text-gray-400"></i></a>
+            <a href="pengaturan.html" class="flex items-center justify-between p-3.5 rounded-none text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-100 font-bold transition-colors"><span>Pengaturan</span> <i data-lucide="settings" class="w-4 h-4 text-gray-400"></i></a>
+            
+            <div class="h-px bg-gray-100 my-4 flex-shrink-0"></div>
+            <button onclick="logout()" class="flex items-center justify-center w-full py-4 px-3 text-white bg-rose-600 font-bold hover:bg-rose-700 rounded-none transition-colors text-sm shadow-md mb-4 flex-shrink-0"><i data-lucide="log-out" class="w-4 h-4 mr-2"></i> Logout</button>
+        </nav>
+    </div>
+
+    <!-- ▼▼▼ SIDEBAR DESKTOP (KIRI) ▼▼▼ -->
+    <aside id="desktop-sidebar" class="fixed left-0 top-24 bottom-0 w-64 bg-white border-r border-slate-200 z-40 hidden md:flex flex-col py-6 group">
+        <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
+            <div class="flex items-center justify-between px-2 mb-4">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest sidebar-text">Menu Navigasi</p>
+                <button onclick="toggleSidebarCollapse()" id="toggle-sidebar-btn" class="p-1 rounded-none text-slate-400 hover:text-[#14213d] hover:bg-slate-100 transition-colors">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <a href="index.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="home" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Home</span>
+            </a>
+            <a href="login.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="log-in" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Login</span>
+            </a>
+            <a href="beranda.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Beranda Trader</span>
+            </a>
+            
+            <!-- MENU AKTIF: BERANDA ANALIS -->
+            <a href="berandaanalis.html" class="flex items-center px-4 py-3 text-sm font-medium rounded-none bg-[#14213d] text-white shadow-md shadow-slate-200 transition-all duration-300">
+                <i data-lucide="activity" class="w-5 h-5 text-white flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Beranda Analis</span>
+            </a>
+            
+            <a href="edukasi.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="graduation-cap" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Education for Student</span>
+            </a>
+            <a href="topanalisdantrader.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="award" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Top Analis Dan Trader</span>
+            </a>
+            <a href="investasi.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="trending-up" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Investasi</span>
+            </a>
+            <a href="backtest.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="history" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Backtest</span>
+            </a>
+            <a href="langganan.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300 mt-2">
+                <i data-lucide="credit-card" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Langganan</span>
+            </a>
+            <a href="pengaturan.html" class="flex items-center px-4 py-3 text-sm font-medium text-slate-500 hover:text-[#14213d] hover:bg-[#14213d]/10 rounded-none transition-all duration-300">
+                <i data-lucide="settings" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Pengaturan</span>
+            </a>
+        </nav>
+        
+        <div class="px-4 pb-4 mt-auto">
+            <div class="h-px bg-slate-100 w-full mb-4"></div>
+            <button onclick="logout()" class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-none text-rose-600 hover:bg-rose-50 transition-all duration-300 mb-4">
+                <i data-lucide="log-out" class="w-5 h-5 flex-shrink-0 sidebar-icon-margin"></i>
+                <span class="sidebar-text">Logout</span>
+            </button>
+            <p class="text-xs text-slate-400 font-medium text-center w-full sidebar-text">© 2026 LEODRA</p>
+        </div>
+    </aside>
+
+    <!-- WRAPPER UNTUK KONTEN UTAMA (BERANDA ANALIS WORKFLOW) -->
+    <div id="main-wrapper" class="md:ml-64 w-full md:w-[calc(100%-16rem)] flex-grow flex flex-col transition-all duration-300 relative bg-[#f8fafc]">
+        <main class="flex-grow w-full px-4 sm:px-6 py-6 sm:py-8 max-w-[1200px] mx-auto">
+            
+            <div class="mb-8 text-center border-b border-slate-200 pb-6">
+                <h1 class="text-2xl md:text-3xl font-serif font-bold text-[#14213d] mb-2">Sistem Jurnal Analis</h1>
+                <p class="text-sm text-slate-500 max-w-2xl mx-auto">
+                    Input rencana trading (Pending Order), pantau eksekusi di market (Running), dan evaluasi performa historis secara terstruktur dan otomatis.
+                </p>
+            </div>
+
+            <!-- LAYOUT SATU KOLOM TERPUSAT -->
+            <div class="space-y-6 flex flex-col">
+                
+                <!-- BAGIAN 1: FORM INPUT JURNAL (Terpusat dengan Layout Horizontal) -->
+                <div class="clean-card p-6 md:p-8 rounded-none border border-slate-200 shadow-sm bg-white">
+                    <div class="flex items-center gap-2 mb-6 border-b border-slate-100 pb-3">
+                        <div class="w-8 h-8 rounded-none bg-blue-50 text-blue-600 flex items-center justify-center"><i data-lucide="edit-3" class="w-4 h-4"></i></div>
+                        <h2 class="font-bold text-base text-slate-800 uppercase tracking-widest">Input Sinyal Baru</h2>
+                    </div>
+                    
+                    <form id="signalForm" class="space-y-5">
+                        <input type="hidden" id="editSignalId" value="">
+                        
+                        <!-- Baris 1: Aset, Tipe, Expired -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Aset Trading (Pair)</label>
+                                <select id="asset" required class="w-full border border-slate-300 p-2.5 text-sm bg-slate-50 font-bold text-[#14213d] rounded-none">
+                                    <optgroup label="Forex Major">
+                                        <option value="EURUSD">EURUSD</option>
+                                        <option value="GBPUSD">GBPUSD</option>
+                                        <option value="USDJPY">USDJPY</option>
+                                        <option value="USDCAD">USDCAD</option>
+                                        <option value="USDCHF">USDCHF</option>
+                                        <option value="AUDUSD">AUDUSD</option>
+                                        <option value="NZDUSD">NZDUSD</option>
+                                    </optgroup>
+                                    <optgroup label="Forex Cross">
+                                        <option value="EURJPY">EURJPY</option>
+                                        <option value="GBPJPY">GBPJPY</option>
+                                        <option value="EURGBP">EURGBP</option>
+                                        <option value="AUDJPY">AUDJPY</option>
+                                        <option value="EURAUD">EURAUD</option>
+                                        <option value="GBPAUD">GBPAUD</option>
+                                    </optgroup>
+                                    <optgroup label="Komoditas">
+                                        <option value="XAUUSD">XAUUSD (Emas)</option>
+                                        <option value="XAGUSD">XAGUSD (Perak)</option>
+                                        <option value="WTI">WTI (Oil)</option>
+                                        <option value="BRENT">BRENT (Oil)</option>
+                                    </optgroup>
+                                    <optgroup label="Index">
+                                        <option value="US30">US30 (Dow Jones)</option>
+                                        <option value="NAS100">NAS100 (Nasdaq)</option>
+                                        <option value="SPX500">SPX500 (S&P 500)</option>
+                                        <option value="GER40">GER40 (DAX)</option>
+                                        <option value="UK100">UK100 (FTSE)</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipe Order</label>
+                                <select id="type" required class="w-full border border-slate-300 p-2.5 text-sm font-bold bg-slate-50 rounded-none">
+                                    <option value="BUY" class="text-emerald-600">BUY</option>
+                                    <option value="SELL" class="text-rose-600">SELL</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">Batas Waktu (Jam)</label>
+                                <input type="number" id="expiration" min="1" required class="w-full border border-slate-300 p-2.5 text-sm bg-slate-50 text-slate-700 font-mono rounded-none" placeholder="Contoh: 4 (artinya 4 jam)">
+                            </div>
+                        </div>
+
+                        <!-- Baris 2: Harga Entry, SL, TP -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Harga Pending / Entry</label>
+                                <input type="number" id="entry" step="any" required class="w-full border border-slate-300 p-2.5 text-sm font-mono rounded-none focus:border-blue-500" placeholder="0.0000">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-rose-500 uppercase mb-1">Stop Loss (SL)</label>
+                                <input type="number" id="sl" step="any" required class="w-full border border-rose-300 bg-rose-50/30 p-2.5 text-sm font-mono rounded-none focus:border-rose-500" placeholder="0.0000">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-emerald-500 uppercase mb-1">Take Profit (TP)</label>
+                                <input type="number" id="tp" step="any" required class="w-full border border-emerald-300 bg-emerald-50/30 p-2.5 text-sm font-mono rounded-none focus:border-emerald-500" placeholder="0.0000">
+                            </div>
+                        </div>
+
+                        <!-- Baris 3: Catatan & Tombol -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                            <div class="md:col-span-8">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Catatan (Notes)</label>
+                                <input type="text" id="notes" class="w-full border border-slate-300 p-2.5 text-sm bg-slate-50 rounded-none focus:border-blue-500" placeholder="Alasan teknikal masuk market...">
+                            </div>
+                            <div class="md:col-span-4 flex gap-2 w-full">
+                                <button type="button" onclick="resetForm()" id="cancelEditBtn" class="hidden flex-1 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-[11px] uppercase tracking-wider transition-colors rounded-none border border-slate-300">
+                                    Batal
+                                </button>
+                                <button type="submit" id="submitBtn" class="flex-1 py-2.5 bg-[#14213d] hover:bg-black text-white font-bold text-[11px] uppercase tracking-wider transition-colors shadow-md rounded-none">
+                                    Posting Signal
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- BAGIAN 2: TABEL PENDING (RENCANA BARU) -->
+                <div class="clean-card rounded-none p-6 relative overflow-hidden bg-white">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-400"></div>
+                    <div class="flex flex-col md:flex-row md:items-end justify-between mb-4 border-b border-slate-100 pb-3 gap-4">
+                        <div>
+                            <h3 class="font-bold text-lg text-[#14213d] flex items-center gap-2"><i data-lucide="clock" class="w-5 h-5 text-blue-500"></i> Rencana Signal Baru (Pending)</h3>
+                            <p class="text-xs text-slate-500 mt-1">Sinyal yang belum terjemput market.</p>
+                        </div>
+                        <div class="bg-rose-50 border border-rose-100 px-4 py-2 text-right">
+                            <p class="text-[10px] uppercase font-bold text-rose-500 tracking-wider">Kalkulasi Resiko Total (<span id="countPending">0</span> Signal)</p>
+                            <p class="text-sm font-bold font-mono text-rose-600" id="riskPending">-0 Pips</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left whitespace-nowrap border-collapse">
+                            <thead class="text-[10px] text-slate-500 uppercase bg-slate-50 border-y border-slate-200">
+                                <tr>
+                                    <th class="p-3 font-bold">No</th>
+                                    <th class="p-3 font-bold">Waktu Dibuat</th>
+                                    <th class="p-3 font-bold">Aset</th>
+                                    <th class="p-3 font-bold">Tipe</th>
+                                    <th class="p-3 font-bold">Entry</th>
+                                    <th class="p-3 font-bold">SL</th>
+                                    <th class="p-3 font-bold">TP</th>
+                                    <th class="p-3 font-bold text-slate-800">Resiko Pips</th>
+                                    <th class="p-3 font-bold text-slate-800">Keuntungan Pips</th>
+                                    <th class="p-3 font-bold text-slate-800">Risk & Reward (RR)</th>
+                                    <th class="p-3 font-bold text-slate-800">Sisa Waktu</th>
+                                    <th class="p-3 font-bold">Notes</th>
+                                    <th class="p-3 font-bold text-center">Aksi Mekanisme</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablePending" class="divide-y divide-slate-100 text-slate-700 text-xs">
+                                <!-- Diisi oleh JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- BAGIAN 3: BLOK SKENARIO & TOLERANSI RISIKO (Digabung sejajar agar rapi) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- BLOK SKENARIO TERBURUK TOTAL -->
+                    <div class="clean-card rounded-none p-6 relative overflow-hidden bg-slate-50 border-slate-200 flex flex-col justify-center">
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+                            <div>
+                                <h3 class="font-bold text-slate-800 flex items-center justify-center sm:justify-start gap-2"><i data-lucide="alert-octagon" class="w-5 h-5 text-slate-800"></i> Skenario Terburuk</h3>
+                                <p class="text-xs text-slate-600 mt-1">Risiko jika semua sinyal Pending & Running terkena Stop Loss bersamaan.</p>
+                            </div>
+                            <div class="sm:text-right bg-white p-3 border border-slate-200 rounded-none shadow-sm w-full sm:w-auto">
+                                <p class="text-xl md:text-2xl font-bold font-mono text-slate-900" id="totalWorstCaseRisk">-0 Pips</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BLOK BATAS TOLERANSI RISIKO (SISA JATAH LOSS) -->
+                    <div class="clean-card rounded-none p-6 relative overflow-hidden bg-indigo-50 border-indigo-200">
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+                            <div class="flex-1">
+                                <h3 class="font-bold text-indigo-900 flex items-center justify-center sm:justify-start gap-2"><i data-lucide="shield-check" class="w-5 h-5 text-indigo-700"></i> Toleransi Loss Bulanan</h3>
+                                <p class="text-xs text-indigo-700 mt-1">Sisa jatah loss berdasarkan rata-rata profit bulanan dikurangi skenario terburuk.</p>
+                            </div>
+                            <div class="flex gap-2 justify-center w-full sm:w-auto">
+                                <div class="bg-white p-2 md:p-3 border border-indigo-100 rounded-none shadow-sm text-center flex-1 sm:flex-none">
+                                    <p class="text-[9px] md:text-[10px] uppercase font-bold text-slate-500 tracking-wider">Batas</p>
+                                    <p class="text-sm md:text-base font-bold font-mono text-slate-800" id="limitMaxLoss">0 Pips</p>
+                                </div>
+                                <div class="bg-white p-2 md:p-3 border border-indigo-100 rounded-none shadow-sm text-center flex-1 sm:flex-none min-w-[80px]">
+                                    <p class="text-[9px] md:text-[10px] uppercase font-bold text-slate-500 tracking-wider">Sisa</p>
+                                    <p class="text-base md:text-xl font-bold font-mono text-emerald-600" id="remainingLossTolerance">0 Pips</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Progress Bar Indicator -->
+                        <div class="w-full bg-indigo-200 h-1.5 mt-4 rounded-none overflow-hidden">
+                            <div id="toleranceProgressBar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BAGIAN 4: TABEL RUNNING -->
+                <div class="clean-card rounded-none p-6 relative overflow-hidden bg-white">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-slate-800"></div>
+                    <div class="flex flex-col md:flex-row md:items-end justify-between mb-4 border-b border-slate-100 pb-3 gap-4">
+                        <div>
+                            <h3 class="font-bold text-lg text-[#14213d] flex items-center gap-2"><i data-lucide="activity" class="w-5 h-5 text-slate-800"></i> Rencana Signal Running</h3>
+                            <p class="text-xs text-slate-500 mt-1">Sinyal yang sedang berjalan (aktif) di market real.</p>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-200 px-4 py-2 text-right">
+                            <p class="text-[10px] uppercase font-bold text-slate-700 tracking-wider">Resiko Aktif (<span id="countRunning">0</span> Signal)</p>
+                            <p class="text-sm font-bold font-mono text-slate-900" id="riskRunning">-0 Pips</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left whitespace-nowrap border-collapse">
+                            <thead class="text-[10px] text-slate-500 uppercase bg-slate-50 border-y border-slate-200">
+                                <tr>
+                                    <th class="p-3 font-bold">No</th>
+                                    <th class="p-3 font-bold">Waktu Dibuat</th>
+                                    <th class="p-3 font-bold">Waktu Tereksekusi</th>
+                                    <th class="p-3 font-bold">Aset</th>
+                                    <th class="p-3 font-bold">Tipe</th>
+                                    <th class="p-3 font-bold">Entry</th>
+                                    <th class="p-3 font-bold">SL</th>
+                                    <th class="p-3 font-bold">TP</th>
+                                    <th class="p-3 font-bold text-slate-800">Resiko Pips</th>
+                                    <th class="p-3 font-bold text-slate-800">Keuntungan Pips</th>
+                                    <th class="p-3 font-bold text-slate-800">Risk & Reward (RR)</th>
+                                    <th class="p-3 font-bold text-slate-800">Sisa Waktu</th>
+                                    <th class="p-3 font-bold">Notes</th>
+                                    <th class="p-3 font-bold text-center">Status</th>
+                                    <th class="p-3 font-bold text-center">Selesaikan Trade</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableRunning" class="divide-y divide-slate-100 text-slate-700 text-xs">
+                                <!-- Diisi oleh JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- BAGIAN 5: TABEL HISTORY (SELESAI) -->
+                <div class="clean-card rounded-none p-6 relative overflow-hidden bg-white">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-slate-400"></div>
+                    <div class="flex justify-between items-end mb-4 border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="font-bold text-lg text-[#14213d] flex items-center gap-2"><i data-lucide="archive" class="w-5 h-5 text-slate-500"></i> Rencana Signal History (Selesai)</h3>
+                            <p class="text-xs text-slate-500 mt-1">Riwayat eksekusi lengkap.</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto max-h-[400px] table-container scrollbar-thin scrollbar-thumb-slate-300">
+                        <table class="w-full text-left whitespace-nowrap border-collapse">
+                            <thead class="text-[10px] text-slate-500 uppercase bg-slate-50 border-y border-slate-200 sticky top-0 z-10">
+                                <tr>
+                                    <th class="p-3 font-bold">No</th>
+                                    <th class="p-3 font-bold">Waktu Dibuat</th>
+                                    <th class="p-3 font-bold">Waktu Tereksekusi</th>
+                                    <th class="p-3 font-bold">Close At</th>
+                                    <th class="p-3 font-bold">Aset</th>
+                                    <th class="p-3 font-bold">Tipe</th>
+                                    <th class="p-3 font-bold">Entry</th>
+                                    <th class="p-3 font-bold">SL</th>
+                                    <th class="p-3 font-bold">TP</th>
+                                    <th class="p-3 font-bold text-slate-800">Resiko Pips</th>
+                                    <th class="p-3 font-bold text-slate-800">Keuntungan Pips</th>
+                                    <th class="p-3 font-bold text-slate-800">Risk & Reward (RR)</th>
+                                    <th class="p-3 font-bold">Notes</th>
+                                    <th class="p-3 font-bold text-center">Status Trade</th>
+                                    <th class="p-3 font-bold text-right">Hasil Profit/Loss</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableHistory" class="divide-y divide-slate-100 text-slate-600 text-xs">
+                                <!-- Diisi oleh JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- BAGIAN 6: MESIN STATISTIK & TABEL BULANAN -->
+                <div class="clean-card rounded-none p-6 bg-white shadow-sm border border-slate-200 mt-4">
+                    <h2 class="font-bold text-lg text-[#14213d] mb-6 border-b border-slate-100 pb-3 flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-500"></i> Data Analisis & Kalkulasi Otomatis
+                    </h2>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+                        <!-- Baris 1: Eksekusi & Perbandingan Signal -->
+                        <div class="bg-slate-50 border border-slate-200 p-4 stat-badge stat-win col-span-2 lg:col-span-2 rounded-none">
+                            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Akumulasi Pips Akhir</div>
+                            <div class="text-2xl font-bold font-mono text-slate-800" id="statNetPips">0</div>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-200 p-4 stat-badge text-center rounded-none">
+                            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Sedang Running</div>
+                            <div class="text-lg font-bold text-blue-500 mt-1" id="statRunningNowDetail">0 Signal</div>
+                        </div>
+                        <div class="bg-emerald-50/50 border border-emerald-100 p-4 stat-badge stat-win text-center rounded-none">
+                            <div class="text-[9px] text-emerald-700 font-bold uppercase tracking-wider mb-1">Signal Profit (Win)</div>
+                            <div class="text-xs font-bold text-emerald-600 mt-1" id="statDetailedWin">0 dari 0 Trade</div>
+                        </div>
+                        <div class="bg-rose-50/50 border border-rose-100 p-4 stat-badge stat-loss text-center rounded-none">
+                            <div class="text-[9px] text-rose-700 font-bold uppercase tracking-wider mb-1">Signal Loss</div>
+                            <div class="text-xs font-bold text-rose-600 mt-1" id="statDetailedLoss">0 dari 0 Trade</div>
+                        </div>
+                        <div class="bg-orange-50/50 border border-orange-100 p-4 stat-badge text-center rounded-none">
+                            <div class="text-[9px] text-orange-700 font-bold uppercase tracking-wider mb-1">Signal Expired</div>
+                            <div class="text-xs font-bold text-orange-600 mt-1" id="statDetailedExpired">0 dari 0 Riwayat</div>
+                        </div>
+
+                        <!-- Baris 2: Dolar & Rata-rata Signal -->
+                        <div class="bg-slate-50 border border-slate-200 p-4 stat-badge stat-win col-span-1 lg:col-span-2 rounded-none">
+                            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Gross Profit (Jika 1 Lot)</div>
+                            <div class="text-lg font-bold font-mono text-emerald-600" id="statGrossProfit">$0</div>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-200 p-4 stat-badge stat-loss col-span-1 lg:col-span-2 rounded-none">
+                            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Gross Loss (Jika 1 Lot)</div>
+                            <div class="text-lg font-bold font-mono text-rose-600" id="statGrossLoss">-$0</div>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-200 p-4 stat-badge text-center rounded-none">
+                            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Avg Signal / Bulan</div>
+                            <div class="text-lg font-bold text-slate-700" id="statAvgSignalMonth">0</div>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-200 p-4 stat-badge text-center rounded-none">
+                            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Avg Signal / Minggu</div>
+                            <div class="text-lg font-bold text-slate-700" id="statAvgSignalWeek">0</div>
+                        </div>
+
+                        <!-- Baris 3: Rata-rata Pips -->
+                        <div class="bg-slate-50 border border-slate-200 p-4 stat-badge stat-win rounded-none">
+                            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Avg TP Pips</div>
+                            <div class="text-lg font-bold font-mono text-emerald-600" id="statAvgTP">0</div>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-200 p-4 stat-badge stat-loss rounded-none">
+                            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Avg SL Pips</div>
+                            <div class="text-lg font-bold font-mono text-rose-600" id="statAvgSL">0</div>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-200 p-4 stat-badge stat-win col-span-1 lg:col-span-2 rounded-none">
+                            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Max TP (Profit Tertinggi)</div>
+                            <div class="text-lg font-bold font-mono text-emerald-600" id="statMaxTP">0</div>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-200 p-4 stat-badge stat-loss col-span-1 lg:col-span-2 rounded-none">
+                            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Max SL (Loss Terbesar)</div>
+                            <div class="text-lg font-bold font-mono text-rose-600" id="statMaxSL">0</div>
+                        </div>
+
+                        <!-- Baris 4: Holding Period -->
+                        <div class="bg-[#14213d] border border-slate-800 p-4 stat-badge col-span-2 md:col-span-3 text-white rounded-none">
+                            <div class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">Avg Holding Period (Rata-rata Running)</div>
+                            <div class="text-sm font-bold font-mono text-blue-300" id="statAvgHolding">0 Hari 0 Jam 0 Menit 0 Detik</div>
+                        </div>
+                        <div class="bg-[#14213d] border border-slate-800 p-4 stat-badge col-span-2 md:col-span-3 text-white rounded-none">
+                            <div class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">Maximal Holding Period (Eksekusi Paling Lama)</div>
+                            <div class="text-sm font-bold font-mono text-indigo-300" id="statMaxHolding">0 Hari 0 Jam 0 Menit 0 Detik</div>
+                        </div>
+
+                        <!-- Baris 5: Beruntun -->
+                        <div class="bg-emerald-50/50 border border-emerald-100 p-4 stat-badge stat-win col-span-2 md:col-span-3 rounded-none">
+                            <div class="text-[9px] text-emerald-800 font-bold uppercase tracking-wider mb-1">Consecutive Profit (Beruntun)</div>
+                            <div class="text-sm font-bold text-emerald-900"><span id="statConsWinCount" class="text-lg">0x</span> beruntun (<span id="statConsWinPips" class="font-mono">+0</span> pips)</div>
+                        </div>
+                        <div class="bg-rose-50/50 border border-rose-100 p-4 stat-badge stat-loss col-span-2 md:col-span-3 rounded-none">
+                            <div class="text-[9px] text-rose-800 font-bold uppercase tracking-wider mb-1">Consecutive Loss (Beruntun)</div>
+                            <div class="text-sm font-bold text-rose-900"><span id="statConsLossCount" class="text-lg">0x</span> beruntun (<span id="statConsLossPips" class="font-mono">0</span> pips)</div>
+                        </div>
+                    </div>
+
+                    <!-- TABEL PROFIT BULANAN DITENGAH -->
+                    <div class="mb-8 border-t border-slate-100 pt-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i data-lucide="calendar-days" class="w-5 h-5 text-blue-600"></i>
+                            <h4 class="text-sm font-bold text-[#14213d] uppercase tracking-widest">Akumulasi Profit & Loss Bulanan</h4>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mb-4">Data tabel di bawah ini adalah hasil kalkulasi agregat Pips (Net Profit/Loss) untuk setiap bulannya secara historis.</p>
+                        <div class="overflow-x-auto border border-slate-200 rounded-none shadow-sm">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-slate-100 border-b border-slate-200 text-[10px] uppercase text-slate-600 font-bold tracking-wider">
+                                    <tr>
+                                        <th class="p-3 w-1/2">Bulan Transaksi</th>
+                                        <th class="p-3 text-right w-1/2">Net Profit / Loss (Pips)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="profitPerMonthTableBody" class="divide-y divide-slate-100 font-mono text-sm bg-white">
+                                    <tr><td colspan="2" class="p-4 text-center text-slate-400 italic font-sans text-xs">Belum ada rekap bulanan. Eksekusi jurnal untuk melihat hasil.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- GRAFIK PERTUMBUHAN -->
+                    <div class="border-t border-slate-100 pt-6">
+                        <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
+                            <div>
+                                <h3 class="text-sm text-[#14213d] uppercase tracking-widest font-bold flex items-center gap-2"><i data-lucide="trending-up" class="w-4 h-4"></i> Grafik Pertumbuhan Pips</h3>
+                                <p class="text-xs text-slate-500 mt-1">Total Pips Development (Equity Curve)</p>
+                            </div>
+                            <div class="text-xs font-mono text-slate-600 md:text-right bg-slate-50 p-2 border border-slate-200 rounded-none shadow-sm">
+                                Middle Profit: <span id="chartMidProfit" class="text-blue-600 font-bold">0</span> Pips <br class="md:hidden">
+                                <span class="hidden md:inline"> | </span> Profit Tertinggi: <span id="chartMaxProfit" class="text-emerald-600 font-bold">0</span> Pips
+                            </div>
+                        </div>
+                        <div class="relative h-[300px] w-full bg-slate-50/50 rounded-none p-2 border border-slate-100">
+                            <canvas id="equityChart"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+
+        <!-- ▼▼▼ FOOTER PROFESIONAL & DESKRIPTIF LEODRA ▼▼▼ -->
+        <footer class="bg-[#14213d] text-white mt-auto w-full border-t border-[#14213d] relative z-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-8 md:gap-10 mb-8">
+                    <!-- Kiri: Brand & Deskripsi -->
+                    <div class="col-span-1 sm:col-span-2 md:col-span-6 lg:col-span-5 text-center sm:text-left">
+                        <span class="font-light text-xl md:text-2xl tracking-widest text-white font-merriweather block mb-3 md:mb-4">LEODRA</span>
+                        <p class="text-[11px] md:text-xs text-slate-300 leading-relaxed text-justify sm:text-left">
+                            Platform manajemen risiko dan analitik trading profesional. <br class="hidden lg:block mb-2">
+                            <strong class="text-white">Keunggulan Eksklusif:</strong> Satu-satunya layanan dengan integrasi otomatis <strong>Backtest berbasis Excel (TF)</strong>, presisi kustomisasi <em>Take Profit/Risk Ratio</em> dinamis, serta analitik probabilitas performa mendalam yang tidak tersedia pada kalkulator trading konvensional.
+                        </p>
+                    </div>
+
+                    <!-- Tengah: Menu Navigasi -->
+                    <div class="col-span-1 md:col-span-4 lg:col-span-5 flex flex-col items-center sm:items-start md:pl-8 lg:pl-16 w-full">
+                        <h4 class="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3 md:mb-4 border-b border-white/10 pb-2 w-full max-w-[200px] text-center sm:text-left">Menu Navigasi</h4>
+                        <div class="grid grid-cols-2 gap-x-4 md:gap-x-8 gap-y-3 text-[10px] md:text-[11px] font-bold tracking-wider uppercase text-slate-300 w-full max-w-[280px]">
+                            <a href="index.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Home</a>
+                            <a href="investasi.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Investasi</a>
+                            <a href="login.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Login</a>
+                            <a href="backtest.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Backtest</a>
+                            <a href="beranda.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Beranda Trader</a>
+                            
+                            <!-- MENU AKTIF FOOTER: BERANDA ANALIS -->
+                            <a href="berandaanalis.html" class="text-white flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-white"></i> <span class="border-b border-white pb-0.5">Beranda Analis</span></a>
+                        
+                        <a href="edukasi.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Education for Student</a>
+                        <a href="topanalisdantrader.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Top Analis Dan Trader</a>
+                        <a href="langganan.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Langganan</a>
+                        <a href="pengaturan.html" class="hover:text-white transition-colors flex items-center gap-1.5"><i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i> Pengaturan</a>
+                    </div>
+                </div>
+
+                <!-- Kanan: Sosial Media & Kontak -->
+                    <div class="col-span-1 md:col-span-2 lg:col-span-2 flex flex-col items-center sm:items-start md:items-end w-full">
+                        <h4 class="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3 md:mb-4 border-b border-white/10 pb-2 w-full max-w-[150px] md:max-w-[120px] text-center sm:text-left md:text-right">Terhubung</h4>
+                        <div class="flex flex-row md:flex-col items-center sm:items-start md:items-end gap-4 md:gap-3">
+                            <a href="https://instagram.com" target="_blank" class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group">
+                                <span class="text-[10px] md:text-[11px] font-bold tracking-wider uppercase hidden md:block">Instagram</span>
+                                <i data-lucide="instagram" class="w-5 h-5 md:w-4 md:h-4 group-hover:scale-110 transition-transform"></i>
+                            </a>
+                            <a href="mailto:support@leodra.com" class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group" title="Email Support">
+                                <span class="text-[10px] md:text-[11px] font-bold tracking-wider uppercase hidden md:block">Support</span>
+                                <i data-lucide="mail" class="w-5 h-5 md:w-4 md:h-4 group-hover:scale-110 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian Bawah: Disclaimer & Copyright -->
+                <div class="border-t border-white/10 pt-5 flex flex-col lg:flex-row justify-between items-center gap-4 md:gap-6 text-[9px] md:text-[10px] text-slate-400 text-center lg:text-left">
+                    <div class="max-w-4xl leading-relaxed">
+                        <strong class="text-slate-300">Peringatan Risiko:</strong> Trading pada instrumen keuangan membawa tingkat risiko tinggi. LEODRA adalah alat bantu analisis dan tidak menyediakan saran investasi. 
+                        <span class="inline-block mt-2 lg:mt-0 lg:ml-2">
+                            <a href="#" class="hover:text-slate-300 underline transition-colors">Syarat & Ketentuan</a> &bull; 
+                            <a href="#" class="hover:text-slate-300 underline transition-colors">Kebijakan Privasi</a>
+                        </span>
+                    </div>
+                    
+                    <div class="flex flex-col items-center lg:items-end gap-1.5 md:gap-2 flex-shrink-0">
+                        <div class="flex items-center gap-2 md:gap-3 font-medium tracking-wide">
+                            <span class="flex items-center gap-1 md:gap-1.5"><span class="w-1.5 h-1.5 rounded-none bg-emerald-500 animate-pulse"></span> Sistem Normal</span>
+                            <span class="text-white/20">|</span>
+                            <span>Versi 1.2.0</span>
+                        </div>
+                        <p>&copy; 2026 LEODRA Analytics. Hak Cipta Dilindungi.</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- MODAL LOGIKA KERJA (ACTION MODAL) -->
+    <div id="actionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 opacity-0 transition-opacity">
+        <div class="bg-white border border-slate-200 p-6 rounded-none shadow-2xl max-w-sm w-full transform scale-95 transition-transform" id="actionModalContent">
+            <h3 class="text-lg font-bold text-[#14213d] mb-2" id="modalTitle">Konfirmasi</h3>
+            <p class="text-slate-500 text-sm mb-6" id="modalDesc">Apakah Anda yakin?</p>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-none text-sm font-bold transition-colors border border-slate-300">Batal</button>
+                <button id="modalConfirmBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-none text-sm transition-colors shadow-sm">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIKA JAVASCRIPT & STATISTIK MESIN -->
+    <script>
+        // INIT EVENT LISTENER
+        document.addEventListener('DOMContentLoaded', () => {
+            // Init Icons
+            if(window.lucide) window.lucide.createIcons();
+            
+            // Panggil Header Time dan Setup Sinkronisasi User Data (Terpusat)
+            updateHeaderTime();
+            setInterval(updateHeaderTime, 1000);
+            loadUserData();
+
+            // Panggil Render All Data Sinyal
+            renderAll();
+        });
+
+        // Waktu & Tanggal (Perbaikan Fungsi Header)
+        function updateHeaderTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).replace(/\./g, ':');
+            const dateStr = now.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+            const elClock = document.getElementById("headerRealTimeClock"); if (elClock) elClock.textContent = timeStr;
+            const elDate = document.getElementById("headerRealTimeDate"); if (elDate) elDate.textContent = dateStr;
+        }
+
+        // Toggle Mobile Menu (Dengan Animasi Cross)
+        window.toggleMenu = function() {
+            const m = document.getElementById('mobile-menu');
+            const iconMenu = document.getElementById('icon-menu');
+            const iconClose = document.getElementById('icon-close');
+            
+            if(m) { 
+                m.classList.toggle('translate-x-full'); 
+                const isOpen = !m.classList.contains('translate-x-full');
+                
+                // Atur agar body tidak bisa di-scroll saat menu terbuka
+                document.body.style.overflow = isOpen ? 'hidden' : 'auto'; 
+                
+                // Logika Animasi Tombol
+                if(isOpen) {
+                    if(iconMenu) { iconMenu.classList.remove('scale-100', 'rotate-0', 'opacity-100'); iconMenu.classList.add('scale-0', 'rotate-90', 'opacity-0'); }
+                    if(iconClose) { iconClose.classList.remove('scale-0', '-rotate-90', 'opacity-0'); iconClose.classList.add('scale-100', 'rotate-0', 'opacity-100'); }
+                } else {
+                    if(iconClose) { iconClose.classList.remove('scale-100', 'rotate-0', 'opacity-100'); iconClose.classList.add('scale-0', '-rotate-90', 'opacity-0'); }
+                    if(iconMenu) { iconMenu.classList.remove('scale-0', 'rotate-90', 'opacity-0'); iconMenu.classList.add('scale-100', 'rotate-0', 'opacity-100'); }
+                }
+            }
+        }
+
+        // Toggle Desktop Sidebar
+        window.toggleSidebarCollapse = function() {
+            const sidebar = document.getElementById('desktop-sidebar');
+            const wrapper = document.getElementById('main-wrapper');
+            sidebar.classList.toggle('is-collapsed');
+            
+            if (sidebar.classList.contains('is-collapsed')) {
+                wrapper.classList.remove('md:ml-64', 'md:w-[calc(100%-16rem)]'); 
+                wrapper.classList.add('md:ml-[5.5rem]', 'md:w-[calc(100%-5.5rem)]');
+            } else {
+                wrapper.classList.add('md:ml-64', 'md:w-[calc(100%-16rem)]'); 
+                wrapper.classList.remove('md:ml-[5.5rem]', 'md:w-[calc(100%-5.5rem)]');
+            }
+
+            // Memperbarui ukuran chart setelah sidebar diubah ukurannya
+            setTimeout(() => { if (typeof equityChartInstance !== 'undefined' && equityChartInstance) equityChartInstance.resize(); }, 300);
+        }
+
+        // Load Data Akun (Sinkronisasi dengan Google)
+        function loadUserData() {
+            const userStr = localStorage.getItem("user");
+            const mobileAvatar = document.getElementById('mobile-user-avatar');
+            const desktopAvatar = document.getElementById('desktop-user-avatar');
+            const desktopUser = document.getElementById('desktop-user-info');
+            const mobileUserName = document.getElementById('mobile-user-name');
+            const mobileUserEmail = document.getElementById('mobile-user-email');
+            const mobileTime = document.getElementById('mobile-user-time');
+            
+            if(userStr) {
+                try {
+                    const u = JSON.parse(userStr); 
+                    const name = u.name || u.email || "User"; 
+                    const email = u.email || "";
+                    let regTime = u.timestamp || "Aktif";
+                    
+                    // Set Desktop Info (Nama dengan font eksklusif)
+                    if(desktopUser) desktopUser.innerHTML = name;
+                    
+                    // Set Mobile Info (Nama & Email dengan font eksklusif)
+                    if(mobileUserName) mobileUserName.textContent = name;
+                    if(mobileUserEmail) mobileUserEmail.textContent = email;
+                    if(mobileTime) mobileTime.textContent = regTime;
+                    
+                    // Setel Foto Profil Lingkaran (Prioritas dari Google: u.picture)
+                    const avatarUrl = u.picture || u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0f172a&color=fff&bold=true`;
+                    if(mobileAvatar) mobileAvatar.src = avatarUrl;
+                    if(desktopAvatar) desktopAvatar.src = avatarUrl;
+                    
+                } catch(e){}
+            } else {
+                if(desktopUser) { desktopUser.textContent = "Mode Tamu"; desktopUser.className = "text-xs font-light text-gray-600 leading-tight mt-1"; }
+                if(mobileUserName) mobileUserName.textContent = "Guest";
+                if(mobileUserEmail) mobileUserEmail.textContent = "Belum login";
+                if(mobileAvatar) mobileAvatar.src = `https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff&bold=true`;
+                if(desktopAvatar) desktopAvatar.src = `https://ui-avatars.com/api/?name=Guest&background=0f172a&color=fff&bold=true`;
+            }
+        }
+
+        // Logout
+        window.logout = function() {
+            if(confirm("Keluar dari sesi ini?")) { 
+                localStorage.removeItem("user"); 
+                localStorage.removeItem("token"); 
+                window.location.href='login.html'; 
+            }
+        }
+
+        // =========================================================================
+        // === CORE ENGINE: WORKFLOW, PIPS CALCULATOR & STATS ANALYTICS ===
+        // =========================================================================
+
+        let signals = []; // Array Penyimpanan Semua Sinyal
+        let equityChartInstance = null;
+        
+        // Konstanta
+        const PIP_MULTIPLIER_STANDARD = 10000;
+        const PIP_MULTIPLIER_JPY = 100;
+        const LOT_VALUE_USD = 10; // 1 Lot Standar = $10 / Pip
+
+        // Utilities
+        const getPipMultiplier = (asset) => asset.toUpperCase().includes('JPY') ? PIP_MULTIPLIER_JPY : PIP_MULTIPLIER_STANDARD;
+        const generateId = () => Math.random().toString(36).substr(2, 9);
+        const formatDate = (isoString) => {
+            if(!isoString) return '-';
+            const d = new Date(isoString);
+            return d.toLocaleDateString('id-ID', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+        };
+        const getMonthYear = (isoString) => {
+            const d = new Date(isoString);
+            return d.toLocaleDateString('id-ID', {month:'short', year:'numeric'});
+        };
+
+        // Hitung Resiko / Target (Pips)
+        const calculatePips = (asset, entry, target, isRisk = true, type) => {
+            const multi = getPipMultiplier(asset);
+            let diff = 0;
+            if(type === 'BUY') diff = isRisk ? (entry - target) : (target - entry);
+            if(type === 'SELL') diff = isRisk ? (target - entry) : (entry - target);
+            return diff * multi;
+        };
+
+        // Kalkulasi Risk & Reward (RR)
+        const calculateRR = (riskPips, rewardPips) => {
+            if (riskPips === 0) return '1 : 0';
+            const ratio = rewardPips / riskPips;
+            return `1 : ${ratio % 1 === 0 ? ratio : ratio.toFixed(2)}`;
+        };
+
+        // Format Durasi Holding (Hari, Jam, Menit, Detik)
+        const formatDuration = (ms) => {
+            if (isNaN(ms) || ms < 0) return '0 Hari 0 Jam 0 Menit 0 Detik';
+            const days = Math.floor(ms / (24*60*60*1000));
+            const daysms = ms % (24*60*60*1000);
+            const hours = Math.floor(daysms / (60*60*1000));
+            const hoursms = ms % (60*60*1000);
+            const minutes = Math.floor(hoursms / (60*1000));
+            const sec = Math.floor((ms % (60*1000)) / 1000);
+            return `${days} Hari ${hours} Jam ${minutes} Menit ${sec} Detik`;
+        };
+
+        // --- SUBMIT FORM JURNAL (CREATE / EDIT) ---
+        document.getElementById('signalForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editSignalId').value;
+            const asset = document.getElementById('asset').value.toUpperCase();
+            const type = document.getElementById('type').value;
+            const entry = parseFloat(document.getElementById('entry').value);
+            const sl = parseFloat(document.getElementById('sl').value);
+            const tp = parseFloat(document.getElementById('tp').value);
+            
+            // Konversi jam input menjadi DateTime ISO format
+            const expHours = parseFloat(document.getElementById('expiration').value);
+            
+            const notes = document.getElementById('notes').value;
+
+            // Validasi Logika Jurnal
+            if(type === 'BUY' && (sl >= entry || tp <= entry)) { alert("Logika BUY salah: SL harus di bawah Entry, TP harus di atas Entry."); return; }
+            if(type === 'SELL' && (sl <= entry || tp >= entry)) { alert("Logika SELL salah: SL harus di atas Entry, TP harus di bawah Entry."); return; }
+
+            if(editId) {
+                // Update
+                const sig = signals.find(s => s.id === editId);
+                if(sig) {
+                    const expDate = new Date(new Date().getTime() + expHours * 60 * 60 * 1000).toISOString();
+                    sig.asset = asset; sig.type = type; sig.entry = entry; sig.sl = sl; sig.tp = tp;
+                    sig.expiration = expDate; sig.notes = notes;
+                }
+                resetForm();
+            } else {
+                // Buat Baru
+                const expDate = new Date(new Date().getTime() + expHours * 60 * 60 * 1000).toISOString();
+                signals.push({
+                    id: generateId(), asset, type, entry, sl, tp, expiration: expDate, notes,
+                    status: 'PENDING', createdAt: new Date().toISOString(), executedAt: null, closedAt: null, pips: 0
+                });
+                this.reset();
+            }
+            renderAll();
+        });
+
+        function resetForm() {
+            document.getElementById('signalForm').reset();
+            document.getElementById('editSignalId').value = '';
+            document.getElementById('submitBtn').innerText = 'Posting Signal';
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+        }
+
+        // --- MEKANISME AKSI (MODAL KONFIRMASI) ---
+        let actionConfig = { id: null, type: null, result: null };
+
+        window.triggerAction = function(id, action, result = null) {
+            actionConfig = { id, type: action, result };
+            const modal = document.getElementById('actionModal');
+            const title = document.getElementById('modalTitle');
+            const desc = document.getElementById('modalDesc');
+            const btn = document.getElementById('modalConfirmBtn');
+
+            if(action === 'DELETE') { title.innerText = 'Hapus Jurnal'; desc.innerText = 'Data rencana akan dihapus permanen.'; btn.className="px-4 py-2 bg-slate-800 hover:bg-black text-white font-bold rounded-none text-sm transition-colors shadow-sm";}
+            if(action === 'CANCEL') { title.innerText = 'Batalkan Rencana'; desc.innerText = 'Sinyal akan dipindah ke history sebagai Dibatalkan (Cancel).'; btn.className="px-4 py-2 bg-slate-800 hover:bg-black text-white font-bold rounded-none text-sm transition-colors shadow-sm";}
+            if(action === 'EXECUTE') { title.innerText = 'Eksekusi Rencana'; desc.innerText = 'Sinyal akan dipindah ke market Running (Aktif).'; btn.className="px-4 py-2 bg-slate-800 hover:bg-black text-white font-bold rounded-none text-sm transition-colors shadow-sm";}
+            if(action === 'CLOSE') { 
+                title.innerText = `Eksekusi Selesai (${result === 'PROFIT' ? 'TP' : 'SL'})`; 
+                desc.innerText = `Trade ini akan ditutup dan dicatat sebagai ${result === 'PROFIT' ? 'PROFIT' : 'LOSS'}.`; 
+                btn.className = "px-4 py-2 bg-slate-800 hover:bg-black text-white font-bold rounded-none text-sm";
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); modal.children[0].classList.remove('scale-95'); }, 10);
+        }
+
+        window.closeModal = function() {
+            const modal = document.getElementById('actionModal');
+            modal.classList.add('opacity-0'); modal.children[0].classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        window.editSignal = function(id) {
+            const sig = signals.find(s => s.id === id);
+            if(sig) {
+                document.getElementById('editSignalId').value = sig.id;
+                document.getElementById('asset').value = sig.asset;
+                document.getElementById('type').value = sig.type;
+                document.getElementById('entry').value = sig.entry;
+                document.getElementById('sl').value = sig.sl;
+                document.getElementById('tp').value = sig.tp;
+                
+                // Konversi expiration ISO date ke jam hitung mundur atau waktu tersisa
+                const expTime = new Date(sig.expiration).getTime();
+                const createdTime = new Date(sig.createdAt).getTime();
+                const diffHours = Math.round((expTime - createdTime) / (1000 * 60 * 60));
+                document.getElementById('expiration').value = diffHours > 0 ? diffHours : 1;
+                
+                document.getElementById('notes').value = sig.notes;
+                
+                document.getElementById('submitBtn').innerText = 'Perbarui Signal';
+                document.getElementById('cancelEditBtn').classList.remove('hidden');
+                document.getElementById('asset').focus();
+            }
+        }
+
+        document.getElementById('modalConfirmBtn').addEventListener('click', () => {
+            const index = signals.findIndex(s => s.id === actionConfig.id);
+            if (index > -1) {
+                const sig = signals[index];
+                const now = new Date().toISOString();
+
+                if (actionConfig.type === 'DELETE') {
+                    signals.splice(index, 1);
+                } else if (actionConfig.type === 'CANCEL') {
+                    sig.status = 'CANCELLED'; sig.closedAt = now;
+                } else if (actionConfig.type === 'EXECUTE') {
+                    sig.status = 'RUNNING'; sig.executedAt = now;
+                } else if (actionConfig.type === 'CLOSE') {
+                    sig.status = actionConfig.result; // PROFIT or LOSS
+                    sig.closedAt = now;
+                    // Kalkulasi Pips Final
+                    const multi = getPipMultiplier(sig.asset);
+                    if (actionConfig.result === 'PROFIT') {
+                        sig.pips = sig.type === 'BUY' ? (sig.tp - sig.entry) * multi : (sig.entry - sig.tp) * multi;
+                    } else if (actionConfig.result === 'LOSS') {
+                        sig.pips = sig.type === 'BUY' ? (sig.sl - sig.entry) * multi : (sig.entry - sig.sl) * multi;
+                        sig.pips = -Math.abs(sig.pips); // Pastikan minus
+                    }
+                }
+                renderAll();
+            }
+            closeModal();
+        });
+
+        // --- RENDER TABLES ---
+        let globalPendingRisk = 0;
+        let globalRunningRisk = 0;
+        let globalAvgMonthlyPips = 0;
+
+        function renderAll() {
+            globalPendingRisk = 0;
+            globalRunningRisk = 0;
+
+            renderPending();
+            renderRunning();
+            renderHistory();
+            calculateAndRenderStats();
+
+            // Total Worst Case Scenario Risk Calculation
+            const totalWorstCase = Math.abs(globalPendingRisk + globalRunningRisk);
+            document.getElementById('totalWorstCaseRisk').innerText = '-' + totalWorstCase.toFixed(1) + ' Pips';
+
+            // Tolerance Risk Calculation (Sisa Jatah Loss Bulanan)
+            // Menggunakan default batas aman 1000 pips jika akun masih baru / belum ada rata-rata profit
+            const baseCapacity = Math.max(globalAvgMonthlyPips, 1000);
+            const remainingTolerance = baseCapacity - totalWorstCase;
+            
+            document.getElementById('limitMaxLoss').innerText = baseCapacity.toFixed(1) + ' Pips';
+            
+            const elRemaining = document.getElementById('remainingLossTolerance');
+            const sign = remainingTolerance > 0 ? '+' : '';
+            elRemaining.innerText = sign + remainingTolerance.toFixed(1) + ' Pips';
+            
+            const bar = document.getElementById('toleranceProgressBar');
+            let percent = (remainingTolerance / baseCapacity) * 100;
+            if(percent < 0) percent = 0;
+            if(percent > 100) percent = 100;
+            bar.style.width = percent + '%';
+            
+            if (remainingTolerance > (baseCapacity * 0.5)) {
+                elRemaining.className = 'text-base md:text-xl font-bold font-mono text-emerald-600';
+                bar.className = 'bg-emerald-500 h-full transition-all duration-500';
+            } else if (remainingTolerance > 0) {
+                elRemaining.className = 'text-base md:text-xl font-bold font-mono text-amber-500';
+                bar.className = 'bg-amber-500 h-full transition-all duration-500';
+            } else {
+                elRemaining.className = 'text-base md:text-xl font-bold font-mono text-rose-600';
+                bar.className = 'bg-rose-500 h-full transition-all duration-500';
+            }
+
+            lucide.createIcons();
+        }
+
+        function renderPending() {
+            // LIFO - reverse order so latest is on top
+            const pending = signals.filter(s => s.status === 'PENDING').reverse();
+            const tbody = document.getElementById('tablePending');
+            let html = ''; 
+            const nowTime = new Date().getTime();
+
+            pending.forEach((s, index) => {
+                const no = index + 1; // Index LIFO
+
+                // Cek Expiration
+                const expTimeMs = new Date(s.expiration).getTime();
+                if(expTimeMs < nowTime) {
+                    s.status = 'EXPIRED'; s.closedAt = new Date().toISOString(); 
+                    return; // Skip rendering this frame
+                }
+                
+                // Sisa waktu dalam jam untuk UI
+                const diffHoursLeft = Math.max(0, Math.round((expTimeMs - nowTime) / (1000 * 60 * 60)));
+
+                // Hitung potensi risk & reward & RR
+                let risk = Math.abs(calculatePips(s.asset, s.entry, s.sl, true, s.type));
+                let reward = Math.abs(calculatePips(s.asset, s.entry, s.tp, false, s.type));
+                let rr = calculateRR(risk, reward);
+
+                globalPendingRisk -= risk; // Always accumulated as negative
+
+                html += `
+                    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
+                        <td class="p-3 text-slate-800 font-mono">${no}</td>
+                        <td class="p-3 text-slate-800">${formatDate(s.createdAt)}</td>
+                        <td class="p-3 font-bold text-slate-900">${s.asset}</td>
+                        <td class="p-3 font-bold text-slate-800">${s.type}</td>
+                        <td class="p-3 font-mono text-slate-800">${s.entry}</td>
+                        <td class="p-3 font-mono text-slate-800">${s.sl}</td>
+                        <td class="p-3 font-mono text-slate-800">${s.tp}</td>
+                        <td class="p-3 font-mono text-slate-900 font-bold">-${risk.toFixed(1)}</td>
+                        <td class="p-3 font-mono text-slate-900 font-bold">+${reward.toFixed(1)}</td>
+                        <td class="p-3 font-mono text-slate-900 font-bold">${rr}</td>
+                        <td class="p-3 font-mono text-slate-800 font-bold">${diffHoursLeft} Jam</td>
+                        <td class="p-3 truncate max-w-[120px] text-slate-800" title="${s.notes}">${s.notes || '-'}</td>
+                        <td class="p-3 text-center space-x-1 whitespace-nowrap">
+                            <button onclick="triggerAction('${s.id}', 'EXECUTE')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-none font-bold transition">Eksekusi</button>
+                            <button onclick="editSignal('${s.id}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-none font-bold transition">Edit</button>
+                            <button onclick="triggerAction('${s.id}', 'CANCEL')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-none font-bold transition">Batal</button>
+                            <button onclick="triggerAction('${s.id}', 'DELETE')" class="p-1.5 text-slate-500 hover:text-slate-800 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+            document.getElementById('countPending').innerText = pending.length;
+            document.getElementById('riskPending').innerText = globalPendingRisk.toFixed(1) + ' Pips';
+        }
+
+        function renderRunning() {
+            // LIFO - reverse order so latest is on top
+            const running = signals.filter(s => s.status === 'RUNNING').reverse();
+            const tbody = document.getElementById('tableRunning');
+            let html = ''; 
+            const nowTime = new Date().getTime();
+
+            running.forEach((s, index) => {
+                const no = index + 1; // Index LIFO
+
+                // Sisa waktu
+                const expTimeMs = new Date(s.expiration).getTime();
+                const diffHoursLeft = Math.max(0, Math.round((expTimeMs - nowTime) / (1000 * 60 * 60)));
+
+                let risk = Math.abs(calculatePips(s.asset, s.entry, s.sl, true, s.type));
+                let reward = Math.abs(calculatePips(s.asset, s.entry, s.tp, false, s.type));
+                let rr = calculateRR(risk, reward);
+
+                globalRunningRisk -= risk;
+
+                html += `
+                    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
+                        <td class="p-3 text-slate-800 font-mono">${no}</td>
+                        <td class="p-3 text-slate-800">${formatDate(s.createdAt)}</td>
+                        <td class="p-3 text-slate-800">${formatDate(s.executedAt)}</td>
+                        <td class="p-3 font-bold text-slate-900">${s.asset}</td>
+                        <td class="p-3 font-bold text-slate-800">${s.type}</td>
+                        <td class="p-3 font-mono text-slate-800 font-bold">${s.entry}</td>
+                        <td class="p-3 font-mono text-slate-800">${s.sl}</td>
+                        <td class="p-3 font-mono text-slate-800">${s.tp}</td>
+                        <td class="p-3 font-mono text-slate-900 font-bold">-${risk.toFixed(1)}</td>
+                        <td class="p-3 font-mono text-slate-900 font-bold">+${reward.toFixed(1)}</td>
+                        <td class="p-3 font-mono text-slate-900 font-bold">${rr}</td>
+                        <td class="p-3 font-mono text-slate-800 font-bold">${diffHoursLeft} Jam</td>
+                        <td class="p-3 truncate max-w-[120px] text-slate-800" title="${s.notes}">${s.notes || '-'}</td>
+                        <td class="p-3 text-center">
+                            <span class="px-2 py-0.5 border border-slate-300 bg-slate-100 text-slate-800 text-[9px] font-bold tracking-widest uppercase inline-flex items-center gap-1">
+                                RUNNING
+                            </span>
+                        </td>
+                        <td class="p-3 text-center space-x-2 whitespace-nowrap">
+                            <button onclick="triggerAction('${s.id}', 'CLOSE', 'PROFIT')" class="px-3 py-1 bg-slate-100 text-slate-800 border border-slate-300 rounded-none font-bold hover:bg-slate-200 transition">Hit TP</button>
+                            <button onclick="triggerAction('${s.id}', 'CLOSE', 'LOSS')" class="px-3 py-1 bg-slate-100 text-slate-800 border border-slate-300 rounded-none font-bold hover:bg-slate-200 transition">Hit SL</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+            document.getElementById('countRunning').innerText = running.length;
+            document.getElementById('riskRunning').innerText = globalRunningRisk.toFixed(1) + ' Pips';
+            document.getElementById('statRunningNowDetail').innerText = running.length + ' Signal';
+        }
+
+        function renderHistory() {
+            // History remains LIFO inherently because we push new trades and `.reverse()` makes newest first.
+            const history = signals.filter(s => ['PROFIT', 'LOSS', 'CANCELLED', 'EXPIRED'].includes(s.status)).reverse();
+            const tbody = document.getElementById('tableHistory');
+            let html = '';
+
+            history.forEach((s, index) => {
+                const no = index + 1; // Index LIFO
+                
+                let pipsText = '-';
+                if(s.status === 'PROFIT') { pipsText = `+${s.pips.toFixed(1)}`; }
+                if(s.status === 'LOSS') { pipsText = `${s.pips.toFixed(1)}`; }
+
+                let risk = Math.abs(calculatePips(s.asset, s.entry, s.sl, true, s.type));
+                let reward = Math.abs(calculatePips(s.asset, s.entry, s.tp, false, s.type));
+                let rr = calculateRR(risk, reward);
+
+                html += `
+                    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
+                        <td class="p-3 text-slate-800 font-mono">${no}</td>
+                        <td class="p-3 text-slate-800">${formatDate(s.createdAt)}</td>
+                        <td class="p-3 text-slate-800">${s.executedAt ? formatDate(s.executedAt) : '-'}</td>
+                        <td class="p-3 text-slate-800 font-bold">${formatDate(s.closedAt)}</td>
+                        <td class="p-3 font-bold text-slate-900">${s.asset}</td>
+                        <td class="p-3 font-bold text-slate-800">${s.type}</td>
+                        <td class="p-3 font-mono text-slate-800">${s.entry}</td>
+                        <td class="p-3 font-mono text-slate-800">${s.sl}</td>
+                        <td class="p-3 font-mono text-slate-800">${s.tp}</td>
+                        <td class="p-3 font-mono text-slate-900 font-bold">-${risk.toFixed(1)}</td>
+                        <td class="p-3 font-mono text-slate-900 font-bold">+${reward.toFixed(1)}</td>
+                        <td class="p-3 font-mono text-slate-900 font-bold">${rr}</td>
+                        <td class="p-3 truncate max-w-[100px] text-slate-800" title="${s.notes}">${s.notes || '-'}</td>
+                        <td class="p-3 text-center"><span class="px-2 py-1 border border-slate-300 text-slate-800 bg-slate-50 text-[9px] font-bold tracking-widest uppercase">${s.status}</span></td>
+                        <td class="p-3 text-right font-mono font-bold text-slate-900">${pipsText}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // --- SISTEM KALKULASI STATISTIK LENGKAP ---
+        function calculateAndRenderStats() {
+            const history = signals.filter(s => ['PROFIT', 'LOSS'].includes(s.status)); 
+            const allHistory = signals.filter(s => ['PROFIT', 'LOSS', 'CANCELLED', 'EXPIRED'].includes(s.status));
+            const chronological = history.sort((a,b) => new Date(a.closedAt) - new Date(b.closedAt));
+            
+            let totalPips = 0; let winCount = 0; let lossCount = 0;
+            let winningPipsSum = 0; let losingPipsSum = 0;
+            let holdingTimes = []; let maxHoldingTime = 0;
+            let maxTP = 0; let maxSL = 0;
+
+            let cWin = 0; let cWinPips = 0; let maxCWin = 0; let maxCWinPips = 0;
+            let cLoss = 0; let cLossPips = 0; let maxCLoss = 0; let maxCLossPips = 0;
+
+            let cumulativePips = []; let currentTotal = 0;
+            let monthlyData = {}; // Format: { "Mar 2026": +150 }
+
+            chronological.forEach(s => {
+                totalPips += s.pips;
+                currentTotal += s.pips;
+                cumulativePips.push({ date: formatDate(s.closedAt), pips: currentTotal });
+
+                // Monthly Grouper
+                const mKey = getMonthYear(s.closedAt);
+                monthlyData[mKey] = (monthlyData[mKey] || 0) + s.pips;
+
+                // Holding time
+                if (s.executedAt && s.closedAt) {
+                    const dur = new Date(s.closedAt).getTime() - new Date(s.executedAt).getTime();
+                    holdingTimes.push(dur);
+                    if (dur > maxHoldingTime) maxHoldingTime = dur;
+                }
+
+                if (s.status === 'PROFIT') {
+                    winCount++; winningPipsSum += s.pips;
+                    if (s.pips > maxTP) maxTP = s.pips;
+                    
+                    cWin++; cWinPips += s.pips;
+                    if(cWin > maxCWin) { maxCWin = cWin; maxCWinPips = cWinPips; }
+                    cLoss = 0; cLossPips = 0; // Reset
+                } else if (s.status === 'LOSS') {
+                    lossCount++; losingPipsSum += s.pips;
+                    if (s.pips < maxSL) maxSL = s.pips;
+
+                    cLoss++; cLossPips += s.pips; 
+                    if(cLoss > maxCLoss) { maxCLoss = cLoss; maxCLossPips = cLossPips; }
+                    cWin = 0; cWinPips = 0; // Reset
+                }
+            });
+
+            const totalExecuted = winCount + lossCount;
+            const allHistoryCount = allHistory.length; 
+            const expiredCount = allHistory.filter(s => s.status === 'EXPIRED').length;
+            const runningCount = signals.filter(s => s.status === 'RUNNING').length;
+            
+            // Waktu Aktif Analis
+            let monthsActive = 1; let weeksActive = 1;
+            if (chronological.length > 1) {
+                const fD = new Date(chronological[0].closedAt);
+                const lD = new Date(chronological[chronological.length-1].closedAt);
+                const diffTime = Math.abs(lD - fD);
+                monthsActive = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30)));
+                weeksActive = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7)));
+            }
+
+            // Set Global Average untuk Kalkulasi Kapasitas Toleransi Loss
+            globalAvgMonthlyPips = monthsActive > 0 ? (totalPips / monthsActive) : 0;
+
+            // Calculations
+            const avgTP = winCount > 0 ? (winningPipsSum / winCount) : 0;
+            const avgSL = lossCount > 0 ? (losingPipsSum / lossCount) : 0;
+            const avgHoldingMs = holdingTimes.length > 0 ? (holdingTimes.reduce((a,b)=>a+b,0) / holdingTimes.length) : 0;
+            
+            const grossProfitUSD = winningPipsSum * LOT_VALUE_USD;
+            const grossLossUSD = Math.abs(losingPipsSum) * LOT_VALUE_USD;
+
+            // --- INJECT KE DOM ---
+            document.getElementById('statNetPips').innerText = totalPips > 0 ? `+${totalPips.toFixed(1)}` : totalPips.toFixed(1);
+            document.getElementById('statNetPips').className = `text-2xl font-bold font-mono ${totalPips >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+
+            document.getElementById('statDetailedWin').innerText = `${winCount} dari ${totalExecuted} Trade`;
+            document.getElementById('statDetailedLoss').innerText = `${lossCount} dari ${totalExecuted} Trade`;
+            document.getElementById('statDetailedExpired').innerText = `${expiredCount} dari ${allHistoryCount} Riwayat`;
+            
+            document.getElementById('statGrossProfit').innerText = `$${grossProfitUSD.toFixed(2)}`;
+            document.getElementById('statGrossLoss').innerText = `-$${grossLossUSD.toFixed(2)}`;
+            
+            document.getElementById('statAvgSignalMonth').innerText = (totalExecuted / monthsActive).toFixed(1);
+            document.getElementById('statAvgSignalWeek').innerText = (totalExecuted / weeksActive).toFixed(1);
+            
+            document.getElementById('statAvgTP').innerText = `+${avgTP.toFixed(1)}`;
+            document.getElementById('statAvgSL').innerText = `${avgSL.toFixed(1)}`;
+            document.getElementById('statMaxTP').innerText = `+${maxTP.toFixed(1)}`;
+            document.getElementById('statMaxSL').innerText = `${maxSL.toFixed(1)}`;
+
+            document.getElementById('statAvgHolding').innerText = formatDuration(avgHoldingMs);
+            document.getElementById('statMaxHolding').innerText = formatDuration(maxHoldingTime);
+
+            document.getElementById('statConsWinCount').innerText = `${maxCWin}x`;
+            document.getElementById('statConsWinPips').innerText = `+${maxCWinPips.toFixed(1)}`;
+            document.getElementById('statConsLossCount').innerText = `${maxCLoss}x`;
+            document.getElementById('statConsLossPips').innerText = `${maxCLossPips.toFixed(1)}`;
+
+            // Render Profit Per Month Table (Dipindah ke tengah)
+            const renderMonthlyTable = (tbodyId) => {
+                const tbody = document.getElementById(tbodyId);
+                if(!tbody) return;
+                
+                tbody.innerHTML = '';
+                if(Object.keys(monthlyData).length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="2" class="p-4 text-center text-slate-400 italic font-sans text-xs">Belum ada rekap bulanan. Eksekusi jurnal untuk melihat hasil.</td></tr>';
+                } else {
+                    for (const [month, pips] of Object.entries(monthlyData)) {
+                        const colorClass = pips >= 0 ? 'text-emerald-700 bg-emerald-50' : 'text-rose-700 bg-rose-50';
+                        const sign = pips > 0 ? '+' : '';
+                        tbody.innerHTML += `
+                            <tr class="${colorClass} border-b border-slate-100 last:border-0">
+                                <td class="p-3 font-bold">${month}</td>
+                                <td class="p-3 text-right font-bold">${sign}${pips.toFixed(1)}</td>
+                            </tr>
+                        `;
+                    }
+                }
+            };
+
+            renderMonthlyTable('profitPerMonthTableBody');
+
+            // Update Chart
+            updateEquityChart(cumulativePips);
+        }
+
+        // --- CHART GENERATOR ---
+        function updateEquityChart(data) {
+            const ctx = document.getElementById('equityChart').getContext('2d');
+            const labels = data.length > 0 ? data.map(d => d.date) : ['Start'];
+            const values = data.length > 0 ? data.map(d => d.pips) : [0];
+
+            // Header Labels
+            const maxVal = values.length > 0 ? Math.max(...values) : 0;
+            const minVal = values.length > 0 ? Math.min(...values) : 0;
+            const midVal = (maxVal + minVal) / 2;
+            document.getElementById('chartMaxProfit').innerText = maxVal.toFixed(1);
+            document.getElementById('chartMidProfit').innerText = midVal.toFixed(1);
+
+            if(equityChartInstance) equityChartInstance.destroy();
+
+            // Gradasi Clean
+            let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)'); 
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+            equityChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Growth (Pips)',
+                        data: values,
+                        borderColor: '#3b82f6', 
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#3b82f6',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { color: '#f1f5f9' }, ticks: { font: { family: 'monospace' } } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
